@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Orders Status Board — Real Tailors — Navy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #7fa8d0;
+            --gold-light: #b8d4ec;
+            --gold-dim: rgba(127,168,208,0.12);
+            --gold-dim2: rgba(127,168,208,0.06);
+            --bg: #080d14;
+            --surface: #0d1520;
+            --surface2: #111d2e;
+            --border: rgba(127,168,208,0.2);
+            --text: #d0dce8;
+            --muted: #5a7088;
+            --red: #c0392b;
+            --red-dim: rgba(192,57,43,0.12);
+            --green: #27ae60;
+            --green-dim: rgba(39,174,96,0.12);
+            --blue: #2471a3;
+            --blue-dim: rgba(36,113,163,0.12);
+        }
+        body.light {
+            --bg: #eef2f7; --surface: #e2eaf4; --surface2: #d4e0ee;
+            --border: rgba(50,90,140,0.2); --text: #0d1a2e; --muted: #5a7090;
+            --gold: #2e6da4; --gold-light: #1a4f80; --gold-dim: rgba(46,109,164,0.1);
+            --gold-dim2: rgba(46,109,164,0.05);
+            --red-dim: rgba(192,57,43,0.08); --green-dim: rgba(39,174,96,0.08);
+            --blue-dim: rgba(36,113,163,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 20px 20px 60px;
+            transition: background 0.4s, color 0.4s;
+        }
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background: repeating-linear-gradient(90deg, transparent, transparent 59px, var(--border) 59px, var(--border) 60px);
+            pointer-events: none; opacity: 0.15;
+        }
+        
+        /* Fullscreen Layout Configuration Container */
+        .container { max-width: 100%; width: 100%; margin: 0 auto; position: relative; padding: 0 20px; }
+
+        /* ── Header ── */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+        }
+        .page-eyebrow { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 4px; }
+        .page-title { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--gold-light); }
+        .back-link {
+            font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--muted); text-decoration: none;
+            border: 1px solid var(--border); padding: 8px 14px; border-radius: 3px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .back-link:hover { color: var(--gold); border-color: var(--gold); }
+
+        /* ── Fullscreen Summary analytics cards ── */
+        .stats-bar {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 4px; padding: 16px 20px;
+            display: flex; flex-direction: column; gap: 4px;
+            position: relative; overflow: hidden;
+        }
+        .stat-card::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+            height: 2px; background: var(--accent-color, var(--border));
+        }
+        .stat-card.gold-accent  { --accent-color: var(--gold); }
+        .stat-card.amber-accent { --accent-color: #e67e22; }
+        .stat-card.green-accent { --accent-color: #27ae60; }
+        .stat-card.red-accent   { --accent-color: #e74c3c; }
+        .stat-card.blue-accent  { --accent-color: #2980b9; }
+
+        .stat-label { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+        .stat-value { font-family: 'Playfair Display', serif; font-size: 2rem; line-height: 1.1; margin-top: 2px; }
+        .stat-value.gold  { color: var(--gold-light); }
+        .stat-value.amber { color: #f39c12; }
+        .stat-value.green { color: #5dde8a; }
+        .stat-value.red   { color: #e87060; }
+        .stat-value.blue  { color: #5dade2; }
+        .stat-sub { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+
+        /* ── Income Analytics Section ── */
+        .income-section {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 4px; margin-bottom: 24px; overflow: hidden;
+        }
+        .income-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 24px; border-bottom: 1px solid var(--gold);
+            background: #0d1a2e;
+        }
+        .income-title { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); }
+
+        /* Period tabs */
+        .period-tabs { display: flex; gap: 6px; }
+        .period-btn {
+            font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em;
+            text-transform: uppercase; padding: 6px 14px; background: none;
+            border: 1px solid var(--border); color: var(--muted); cursor: pointer;
+            border-radius: 3px; transition: all 0.2s;
+        }
+        .period-btn:hover { color: var(--gold); border-color: var(--gold); }
+        .period-btn.active { background: #1a3a5c; color: #b8d4ec; border-color: var(--gold); font-weight: 500; }
+
+        /* Income matrix configuration components layout grid */
+        .income-body { padding: 24px; }
+        .income-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 20px;
+        }
+        .income-card {
+            border-radius: 4px; padding: 18px 20px;
+            border: 1px solid var(--border);
+        }
+        .income-card.collected { background: var(--green-dim); border-color: rgba(39,174,96,0.3); }
+        .income-card.pending-amt { background: var(--gold-dim); border-color: rgba(127,168,208,0.3); }
+        .income-card.due-amt { background: var(--red-dim); border-color: rgba(192,57,43,0.3); }
+
+        .income-card-label { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px; }
+        .income-card.collected   .income-card-label { color: #5dde8a; }
+        .income-card.pending-amt .income-card-label { color: var(--gold-light); }
+        .income-card.due-amt     .income-card-label { color: #e87060; }
+
+        .income-card-value { font-family: 'Playfair Display', serif; font-size: 2rem; line-height: 1; }
+        .income-card.collected   .income-card-value { color: #5dde8a; }
+        .income-card.pending-amt .income-card-value { color: var(--gold-light); }
+        .income-card.due-amt     .income-card-value { color: #e87060; }
+
+        .income-card-count { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+
+        /* Period label bar layout configurations */
+        .period-label-bar {
+            font-family: 'DM Mono', monospace; font-size: 0.75rem;
+            color: var(--muted); letter-spacing: 0.06em;
+            padding: 12px 0 4px 0; border-top: 1px solid var(--border);
+        }
+        #periodLabel { color: var(--gold-light); }
+
+        /* Month/Year selector panel components */
+        .picker-row {
+            display: flex; align-items: center; gap: 10px; margin-top: 12px;
+        }
+        .picker-row label { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+        .date-picker {
+            background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+            padding: 8px 14px; border-radius: 3px; font-family: 'DM Mono', monospace;
+            font-size: 0.82rem; outline: none; transition: border-color 0.2s;
+        }
+        .date-picker:focus { border-color: var(--gold); }
+        .picker-row select.date-picker option { background: #111d2e; }
+
+        /* ── Filter layout parameters panel ── */
+        .filter-bar {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .filter-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+        .filter-input {
+            background: var(--surface); border: 1px solid var(--border); color: var(--text);
+            padding: 9px 14px; border-radius: 3px; font-family: 'DM Mono', monospace;
+            font-size: 0.85rem; outline: none; transition: border-color 0.2s; width: 280px;
+        }
+        .filter-input:focus { border-color: var(--gold); }
+        .filter-toggle {
+            font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.1em;
+            text-transform: uppercase; padding: 9px 16px; background: none;
+            border: 1px solid var(--border); color: var(--muted); cursor: pointer;
+            border-radius: 3px; transition: all 0.2s;
+        }
+        .filter-toggle:hover { color: var(--gold); border-color: var(--gold); }
+        .filter-toggle.active { background: var(--gold-dim); color: var(--gold-light); border-color: var(--gold); }
+
+        /* ── Fullscreen Kanban Status Dashboard Board columns ── */
+        .board { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; width: 100%; }
+
+        .column-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 0 12px 0; margin-bottom: 16px; border-bottom: 2px solid;
+        }
+        .col-pending .column-header  { border-color: var(--gold); }
+        .col-delivered .column-header { border-color: #27ae60; }
+
+        .column-title { font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; }
+        .col-pending .column-title  { color: var(--gold-light); }
+        .col-delivered .column-title { color: #5dde8a; }
+
+        .column-count { font-family: 'Playfair Display', serif; font-size: 1.8rem; line-height: 1; }
+        .col-pending .column-count  { color: var(--gold); }
+        .col-delivered .column-count { color: #27ae60; }
+
+        /* ── Order layout card ── */
+        .order-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-left: 4px solid; border-radius: 4px;
+            padding: 16px 18px 14px; margin-bottom: 12px;
+            transition: transform 0.15s, background 0.2s;
+        }
+        .order-card:hover { transform: translateX(3px); background: var(--surface2); }
+        .col-pending .order-card  { border-left-color: var(--gold); }
+        .col-delivered .order-card { border-left-color: #27ae60; }
+        .order-card.hidden { display: none; }
+
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .card-name { font-weight: 500; font-size: 1.05rem; color: var(--text); }
+        .card-bill-id { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+
+        .card-meta { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
+
+        /* Amount chip elements row alignment */
+        .card-amounts {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;
+        }
+        .amt-chip {
+            font-family: 'DM Mono', monospace; font-size: 0.7rem;
+            padding: 4px 10px; border-radius: 2px; letter-spacing: 0.04em;
+        }
+        .amt-total   { background: var(--gold-dim2); color: var(--gold-light); border: 1px solid rgba(127,168,208,0.2); }
+        .amt-paid    { background: var(--green-dim); color: #5dde8a; border: 1px solid rgba(39,174,96,0.2); }
+        .amt-due     { background: var(--red-dim); color: #e87060; border: 1px solid rgba(192,57,43,0.25); font-weight: 500; }
+        .amt-clear   { background: var(--green-dim); color: #5dde8a; border: 1px solid rgba(39,174,96,0.2); }
+
+        .card-bottom { display: flex; justify-content: space-between; align-items: center; }
+        .card-date { font-family: 'DM Mono', monospace; font-size: 0.75rem; font-weight: 500; }
+        .col-pending .card-date  { color: var(--gold); }
+        .col-delivered .card-date { color: #5dde8a; }
+
+        .view-btn {
+            font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em;
+            text-transform: uppercase; padding: 6px 13px;
+            background: var(--gold-dim); border: 1px solid var(--border);
+            color: var(--gold-light); border-radius: 3px; text-decoration: none;
+            transition: background 0.2s, border-color 0.2s; white-space: nowrap;
+        }
+        .view-btn:hover { background: rgba(127,168,208,0.2); border-color: var(--gold); }
+
+        .empty-state {
+            font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--muted);
+            text-align: center; padding: 48px 20px; letter-spacing: 0.06em;
+            border: 1px dashed var(--border); border-radius: 4px;
+        }
+    
+        /* ══ Navy Theme Polish ══ */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 120% 80% at 20% 0%, rgba(30,80,140,0.18) 0%, transparent 60%),
+                        radial-gradient(ellipse 80% 60% at 80% 100%, rgba(10,40,90,0.2) 0%, transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .page-title {
+            background: linear-gradient(135deg, #b8d4ec 0%, #7fa8d0 40%, #d8eaf8 70%, #9bbfd8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(127,168,208,0.1); }
+        .order-card:hover { box-shadow: 0 4px 16px rgba(127,168,208,0.08); }
+        input:focus, select:focus { box-shadow: 0 0 0 2px rgba(127,168,208,0.15); }
+        .section-header { border-left: 3px solid var(--gold); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--surface); }
+        ::-webkit-scrollbar-thumb { background: rgba(127,168,208,0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(127,168,208,0.5); }
+    </style>
+</head>
+<body class="{{ current_theme }}">
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <div class="page-eyebrow">Real Tailors ERP</div>
+            <div class="page-title">Orders Status Board</div>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Dashboard</a>
+    </div>
+
+    {% set all_bills = pending_bills + delivered_bills %}
+    {% set total_orders   = all_bills|length %}
+    {% set total_income   = all_bills|sum(attribute='Total_Amount') %}
+    {% set total_paid      = all_bills|sum(attribute='Paid_Amount') %}
+    {% set total_due      = all_bills|sum(attribute='Balance_Due') %}
+
+    <div class="stats-bar">
+        <div class="stat-card gold-accent">
+            <span class="stat-label">Total Orders</span>
+            <span class="stat-value gold">{{ total_orders }}</span>
+            <span class="stat-sub">All time</span>
+        </div>
+        <div class="stat-card amber-accent">
+            <span class="stat-label">Pending</span>
+            <span class="stat-value amber">{{ pending_bills|length }}</span>
+            <span class="stat-sub">In progress</span>
+        </div>
+        <div class="stat-card green-accent">
+            <span class="stat-label">Delivered</span>
+            <span class="stat-value green">{{ delivered_bills|length }}</span>
+            <span class="stat-sub">Completed</span>
+        </div>
+        <div class="stat-card blue-accent">
+            <span class="stat-label">Total Billed</span>
+            <span class="stat-value blue">₹{{ "%.0f"|format(total_income) }}</span>
+            <span class="stat-sub">All bills</span>
+        </div>
+        <div class="stat-card red-accent">
+            <span class="stat-label">Balance Due</span>
+            <span class="stat-value red">₹{{ "%.0f"|format(total_due) }}</span>
+            <span class="stat-sub">Outstanding</span>
+        </div>
+    </div>
+
+    <div class="income-section">
+        <div class="income-header">
+            <span class="income-title">◈ Income Analytics</span>
+            <div class="period-tabs">
+                <button class="period-btn active" onclick="setPeriod('today')">Today</button>
+                <button class="period-btn" onclick="setPeriod('monthly')">Monthly</button>
+                <button class="period-btn" onclick="setPeriod('yearly')">Yearly</button>
+            </div>
+        </div>
+        <div class="income-body">
+
+            <div class="picker-row" id="monthPicker" style="display:none; margin-bottom:16px;">
+                <label>Month:</label>
+                <select class="date-picker" id="selMonth" onchange="renderIncome()">
+                    <option value="1">January</option><option value="2">February</option>
+                    <option value="3">March</option><option value="4">April</option>
+                    <option value="5">May</option><option value="6">June</option>
+                    <option value="7">July</option><option value="8">August</option>
+                    <option value="9">September</option><option value="10">October</option>
+                    <option value="11">November</option><option value="12">December</option>
+                </select>
+                <label>Year:</label>
+                <select class="date-picker" id="selMonthYear" onchange="renderIncome()"></select>
+            </div>
+            <div class="picker-row" id="yearPicker" style="display:none; margin-bottom:16px;">
+                <label>Year:</label>
+                <select class="date-picker" id="selYear" onchange="renderIncome()"></select>
+            </div>
+
+            <div class="income-grid">
+                <div class="income-card collected">
+                    <div class="income-card-label">✔ Amount Collected</div>
+                    <div class="income-card-value" id="inc_collected">₹0</div>
+                    <div class="income-card-count" id="inc_collected_count">0 bills</div>
+                </div>
+                <div class="income-card pending-amt">
+                    <div class="income-card-label">⏳ Total Billed</div>
+                    <div class="income-card-value" id="inc_billed">₹0</div>
+                    <div class="income-card-count" id="inc_billed_count">0 bills</div>
+                </div>
+                <div class="income-card due-amt">
+                    <div class="income-card-label">⚠ Balance Due</div>
+                    <div class="income-card-value" id="inc_due">₹0</div>
+                    <div class="income-card-count" id="inc_due_count">0 bills pending</div>
+                </div>
+            </div>
+
+            <div class="period-label-bar">
+                Showing data for: <span id="periodLabel">Today</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <span class="filter-label">Filter:</span>
+        <input type="text" class="filter-input" id="filterInput"
+               placeholder="Search by name or mobile…" oninput="filterCards()">
+        <button class="filter-toggle" id="toggleDue" onclick="toggleDueFilter()">Show Due Only</button>
+    </div>
+
+    <div class="board">
+
+        <div class="column col-pending">
+            <div class="column-header">
+                <span class="column-title">⏳ Pending Orders</span>
+                <span class="column-count">{{ pending_bills|length }}</span>
+            </div>
+
+            {% if pending_bills %}
+                {% for bill in pending_bills %}
+                <div class="order-card"
+                     data-name="{{ bill['CustomerName']|lower }}"
+                     data-mobile="{{ bill['Mobile'] }}"
+                     data-due="{{ bill['Balance_Due'] }}">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-name">{{ bill['CustomerName'] }}</div>
+                            <div class="card-bill-id">Bill #{{ bill['BillID'] }}</div>
+                        </div>
+                    </div>
+                    <div class="card-meta">#{{ bill['CustID'] }} · {{ bill['Mobile'] }}</div>
+                    <div class="card-amounts">
+                        <span class="amt-chip amt-total">Total ₹{{ "%.0f"|format(bill['Total_Amount']) }}</span>
+                        <span class="amt-chip amt-paid">Paid ₹{{ "%.0f"|format(bill['Paid_Amount']) }}</span>
+                        {% if bill['Balance_Due'] > 0 %}
+                        <span class="amt-chip amt-due">Due ₹{{ "%.0f"|format(bill['Balance_Due']) }}</span>
+                        {% else %}
+                        <span class="amt-chip amt-clear">✔ Settled</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-bottom">
+                        <span class="card-date">Target: {{ bill['Delivery_Date'] or 'Not set' }}</span>
+                        <a href="{{ url_for('billing', cust_id=bill['CustID'], load_bill_id=bill['BillID']) }}" class="view-btn">View →</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No pending orders.<br>Great work!</div>
+            {% endif %}
+        </div>
+
+        <div class="column col-delivered">
+            <div class="column-header">
+                <span class="column-title">✔ Delivered Orders</span>
+                <span class="column-count">{{ delivered_bills|length }}</span>
+            </div>
+
+            {% if delivered_bills %}
+                {% for bill in delivered_bills %}
+                <div class="order-card"
+                     data-name="{{ bill['CustomerName']|lower }}"
+                     data-mobile="{{ bill['Mobile'] }}"
+                     data-due="{{ bill['Balance_Due'] }}">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-name">{{ bill['CustomerName'] }}</div>
+                            <div class="card-bill-id">Bill #{{ bill['BillID'] }}</div>
+                        </div>
+                    </div>
+                    <div class="card-meta">#{{ bill['CustID'] }} · {{ bill['Mobile'] }}</div>
+                    <div class="card-amounts">
+                        <span class="amt-chip amt-total">Total ₹{{ "%.0f"|format(bill['Total_Amount']) }}</span>
+                        <span class="amt-chip amt-paid">Paid ₹{{ "%.0f"|format(bill['Paid_Amount']) }}</span>
+                        {% if bill['Balance_Due'] > 0 %}
+                        <span class="amt-chip amt-due">Due ₹{{ "%.0f"|format(bill['Balance_Due']) }}</span>
+                        {% else %}
+                        <span class="amt-chip amt-clear">✔ Settled</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-bottom">
+                        <span class="card-date">Delivered: {{ bill['Delivery_Date'] or '—' }}</span>
+                        <a href="{{ url_for('billing', cust_id=bill['CustID'], load_bill_id=bill['BillID']) }}" class="view-btn">View →</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No delivered orders yet.</div>
+            {% endif %}
+        </div>
+
+    </div></div><script>
+// ── All bills data from Flask ──────────────────────────────────────────────
+const ALL_BILLS = [
+    {% for bill in pending_bills + delivered_bills %}
+    {
+        date:   "{{ bill['Date'] or '' }}",
+        total:  {{ bill['Total_Amount'] | float }},
+        paid:   {{ bill['Paid_Amount']  | float }},
+        due:    {{ bill['Balance_Due']  | float }},
+        status: "{{ bill['Status'] }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+
+// ── Parse DD-MM-YYYY into a Date object ───────────────────────────────────
+function parseBillDate(str) {
+    if (!str) return null;
+    const parts = str.split('-');
+    if (parts.length !== 3) return null;
+    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+}
+
+// ── Period state ──────────────────────────────────────────────────────────
+let currentPeriod = 'today';
+
+// ── Populate year dropdowns from bill data ────────────────────────────────
+function populateYears() {
+    const now = new Date();
+    const years = new Set();
+    years.add(now.getFullYear());
+    ALL_BILLS.forEach(b => {
+        const d = parseBillDate(b.date);
+        if (d) years.add(d.getFullYear());
+    });
+    const sorted = [...years].sort((a, b) => b - a);
+
+    ['selMonthYear', 'selYear'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        sel.innerHTML = '';
+        sorted.forEach(y => {
+            const opt = document.createElement('option');
+            opt.value = y; opt.textContent = y;
+            if (y === now.getFullYear()) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    });
+
+    const selMonth = document.getElementById('selMonth');
+    if (selMonth) selMonth.value = now.getMonth() + 1;
+}
+
+// ── Filter bills by period ────────────────────────────────────────────────
+function getBillsForPeriod() {
+    const now = new Date();
+
+    if (currentPeriod === 'today') {
+        return ALL_BILLS.filter(b => {
+            const d = parseBillDate(b.date);
+            if (!d) return false;
+            return d.getFullYear() === now.getFullYear() &&
+                   d.getMonth()    === now.getMonth()    &&
+                   d.getDate()     === now.getDate();
+        });
+    }
+
+    if (currentPeriod === 'monthly') {
+        const m = parseInt(document.getElementById('selMonth')?.value)    || (now.getMonth() + 1);
+        const y = parseInt(document.getElementById('selMonthYear')?.value) || now.getFullYear();
+        return ALL_BILLS.filter(b => {
+            const d = parseBillDate(b.date);
+            if (!d) return false;
+            return d.getFullYear() === y && (d.getMonth() + 1) === m;
+        });
+    }
+
+    if (currentPeriod === 'yearly') {
+        const y = parseInt(document.getElementById('selYear')?.value) || now.getFullYear();
+        return ALL_BILLS.filter(b => {
+            const d = parseBillDate(b.date);
+            if (!d) return false;
+            return d.getFullYear() === y;
+        });
+    }
+
+    return [];
+}
+
+// ── Render income cards ───────────────────────────────────────────────────
+function renderIncome() {
+    const bills = getBillsForPeriod();
+
+    const totalBilled    = bills.reduce((s, b) => s + b.total, 0);
+    const totalCollected = bills.reduce((s, b) => s + b.paid,  0);
+    const totalDue       = bills.reduce((s, b) => s + b.due,   0);
+    const dueBills       = bills.filter(b => b.due > 0).length;
+
+    document.getElementById('inc_collected').textContent      = '₹' + totalCollected.toLocaleString('en-IN', {maximumFractionDigits:0});
+    document.getElementById('inc_collected_count').textContent = bills.length + ' bill' + (bills.length !== 1 ? 's' : '');
+    document.getElementById('inc_billed').textContent         = '₹' + totalBilled.toLocaleString('en-IN', {maximumFractionDigits:0});
+    document.getElementById('inc_billed_count').textContent    = bills.length + ' bill' + (bills.length !== 1 ? 's' : '');
+    document.getElementById('inc_due').textContent             = '₹' + totalDue.toLocaleString('en-IN', {maximumFractionDigits:0});
+    document.getElementById('inc_due_count').textContent      = dueBills + ' bill' + (dueBills !== 1 ? 's' : '') + ' with balance';
+
+    const now = new Date();
+    let label = '';
+    if (currentPeriod === 'today') {
+        label = now.toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'});
+    } else if (currentPeriod === 'monthly') {
+        const m = parseInt(document.getElementById('selMonth')?.value)    || (now.getMonth()+1);
+        const y = parseInt(document.getElementById('selMonthYear')?.value) || now.getFullYear();
+        const mName = new Date(y, m-1, 1).toLocaleString('en-IN', {month:'long'});
+        label = mName + ' ' + y;
+    } else {
+        const y = parseInt(document.getElementById('selYear')?.value) || now.getFullYear();
+        label = 'Year ' + y;
+    }
+    document.getElementById('periodLabel').textContent = label + (bills.length === 0 ? ' (no bills found)' : '');
+}
+
+// ── Switch period ─────────────────────────────────────────────────────────
+function setPeriod(p) {
+    currentPeriod = p;
+    document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    document.getElementById('monthPicker').style.display = (p === 'monthly') ? 'flex' : 'none';
+    document.getElementById('yearPicker').style.display  = (p === 'yearly')  ? 'flex' : 'none';
+
+    renderIncome();
+}
+
+// ── Filter cards by name/mobile ───────────────────────────────────────────
+let dueFilterActive = false;
+
+function filterCards() {
+    const q = document.getElementById('filterInput').value.toLowerCase().trim();
+    document.querySelectorAll('.order-card').forEach(card => {
+        const name   = card.dataset.name   || '';
+        const mobile = card.dataset.mobile || '';
+        const due    = parseFloat(card.dataset.due) || 0;
+
+        const matchText = !q || name.includes(q) || mobile.includes(q);
+        const matchDue  = !dueFilterActive || due > 0;
+
+        card.classList.toggle('hidden', !matchText || !matchDue);
+    });
+}
+
+function toggleDueFilter() {
+    dueFilterActive = !dueFilterActive;
+    document.getElementById('toggleDue').classList.toggle('active', dueFilterActive);
+    filterCards();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+    populateYears();
+    renderIncome();
+});
+</script>
+</body>
+</html>

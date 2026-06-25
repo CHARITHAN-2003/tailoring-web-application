@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>REAL TAILORS — ERP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #7fa8d0;
+            --gold-light: #b8d4ec;
+            --gold-dim: rgba(127,168,208,0.12);
+            --bg: #080d14;
+            --surface: #0d1520;
+            --surface2: #111d2e;
+            --border: rgba(127,168,208,0.2);
+            --text: #d0dce8;
+            --muted: #5a7088;
+            --red: #c0392b;
+            --green: #27ae60;
+            --gold-dim: rgba(127,168,208,0.15);
+        }
+        body.light {
+            --bg: #eef2f7; --surface: #e2eaf4; --surface2: #d4e0ee;
+            --border: rgba(50,90,140,0.2); --text: #0d1a2e; --muted: #5a7090;
+            --gold: #2e6da4; --gold-light: #1a4f80; --gold-dim: rgba(46,109,164,0.1);
+            --gold-dim: rgba(46,109,164,0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.4s, color 0.4s;
+        }
+
+        /* Decorative background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: 
+                repeating-linear-gradient(0deg, transparent, transparent 59px, var(--border) 59px, var(--border) 60px),
+                repeating-linear-gradient(90deg, transparent, transparent 59px, var(--border) 59px, var(--border) 60px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, var(--bg) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrapper {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            width: 100%;
+            max-width: 760px;
+            padding: 40px 20px;
+        }
+
+        .logo-wrap {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .logo-eyebrow {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.4em;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 700;
+            color: var(--gold-light);
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        .logo-sub {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.5em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        .divider {
+            width: 120px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            margin: 20px auto;
+        }
+
+        /* Flash messages */
+        .flash-container {
+            width: 100%;
+            margin-bottom: 24px;
+        }
+        .flash {
+            padding: 12px 20px;
+            border-radius: 3px;
+            font-size: 0.9rem;
+            font-family: 'DM Mono', monospace;
+            letter-spacing: 0.02em;
+            border-left: 3px solid;
+        }
+        .flash.success { background: rgba(39,174,96,0.12); border-color: var(--green); color: #5dde8a; }
+        .flash.error { background: rgba(192,57,43,0.12); border-color: var(--red); color: #e87060; }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .menu-btn {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 24px 22px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-decoration: none;
+            color: var(--text);
+            cursor: pointer;
+            overflow: hidden;
+            transition: border-color 0.3s, transform 0.2s, background 0.3s;
+            min-height: 110px;
+        }
+
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--gold-dim) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .menu-btn:hover {
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            background: var(--surface2);
+        }
+        .menu-btn:hover::before { opacity: 1; }
+
+        .btn-icon {
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+            display: block;
+            line-height: 1;
+        }
+
+        .btn-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            line-height: 1.4;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-desc {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-arrow {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            color: var(--border);
+            font-size: 1.1rem;
+            transition: color 0.3s, transform 0.3s;
+        }
+        .menu-btn:hover .btn-arrow {
+            color: var(--gold);
+            transform: translate(2px, -2px);
+        }
+
+        /* Status button spans 2 cols */
+        .btn-wide {
+            grid-column: span 2;
+        }
+        .btn-wip {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-wip:hover {
+            transform: none;
+            border-color: var(--border);
+            background: var(--surface);
+        }
+        .btn-wip:hover::before { opacity: 0; }
+        .btn-wip:hover .btn-arrow { color: var(--border); transform: none; }
+
+        .theme-row {
+            margin-top: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .theme-toggle, .logout-btn {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            background: none;
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: border-color 0.3s, color 0.3s, background 0.3s;
+        }
+        
+        .theme-toggle {
+            color: var(--muted);
+        }
+        .theme-toggle:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .logout-btn {
+            color: var(--red);
+        }
+        .logout-btn:hover {
+            border-color: var(--red);
+            background: rgba(192,57,43,0.08);
+        }
+
+        .timestamp {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+            margin-left: auto;
+        }
+
+        @media (max-width: 500px) {
+            .timestamp {
+                margin-left: 0;
+                width: 100%;
+                text-align: center;
+                margin-top: 10px;
+            }
+        }
+        
+        /* ══ Navy Theme Polish ══ */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 120% 80% at 20% 0%, rgba(30,80,140,0.2) 0%, transparent 60%),
+                        radial-gradient(ellipse 80% 60% at 80% 100%, rgba(10,40,90,0.22) 0%, transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        h1 {
+            background: linear-gradient(135deg, #d8eaf8 0%, #7fa8d0 45%, #b8d4ec 75%, #5a9ac4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .menu-btn:hover {
+            box-shadow: 0 4px 24px rgba(127,168,208,0.12);
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--surface); }
+        ::-webkit-scrollbar-thumb { background: rgba(127,168,208,0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(127,168,208,0.5); }
+        .menu-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(127,168,208,0.4), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .menu-btn:hover::after { opacity: 1; }
+    </style>
+</head>
+<body class="{{ current_theme }}">
+    <div class="wrapper">
+        <div class="logo-wrap">
+            <div class="logo-eyebrow">Est. — Since Day One</div>
+            <h1>{{ shop_name }}</h1>
+            <div class="logo-sub">Enterprise Resource System</div>
+            <div class="divider"></div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-container">
+              {% for category, msg in messages %}
+                <div class="flash {{ category }}">{{ msg }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="menu-grid">
+            <a href="{{ url_for('new_form') }}" class="menu-btn">
+                <span class="btn-icon">✦</span>
+                <span class="btn-label">New Customer</span>
+                <span class="btn-desc">Register & measurements</span>
+                <span class="btn-arrow">↗</span>
+            </a>
+
+            <a href="{{ url_for('billing') }}" class="menu-btn">
+                <span class="btn-icon">◈</span>
+                <span class="btn-label">Billing Form</span>
+                <span class="btn-desc">Create & manage bills</span>
+                <span class="btn-arrow">↗</span>
+            </a>
+
+            <a href="{{ url_for('search') }}" class="menu-btn">
+                <span class="btn-icon">⌕</span>
+                <span class="btn-label">Search & Update</span>
+                <span class="btn-desc">Find customer records</span>
+                <span class="btn-arrow">↗</span>
+            </a>
+
+            <a href="{{ url_for('status_dashboard') }}" class="menu-btn btn-wide" style="min-height:90px; flex-direction:row; align-items:center; gap:16px; justify-content:flex-start;">
+                <span class="btn-icon" style="margin-bottom:0; font-size:2rem;">◉</span>
+                <div>
+                    <span class="btn-label">Orders Status Board</span>
+                    <span class="btn-desc" style="display:block;">Track pending & delivered orders</span>
+                </div>
+                <span class="btn-arrow" style="top:50%; transform:translateY(-50%);">↗</span>
+            </a>
+
+            <a href="#" onclick="alert('Module under development!')" class="menu-btn btn-wip">
+                <span class="btn-icon">⊡</span>
+                <span class="btn-label">Workers Form</span>
+                <span class="btn-desc">Coming soon</span>
+                <span class="btn-arrow">—</span>
+            </a>
+        </div>
+
+        <div class="theme-row">
+            <a href="{{ url_for('toggle_theme') }}" class="theme-toggle">🌓 Toggle Theme</a>
+            
+            {% if is_logged_in %}
+            <a href="{{ url_for('logout') }}" class="logout-btn">🚪 Logout ({{ owner_name }})</a>
+            {% endif %}
+            
+            <span class="timestamp" id="clock"></span>
+        </div>
+    </div>
+
+    <script>
+        function tick() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleString('en-IN', {
+                day:'2-digit', month:'short', year:'numeric',
+                hour:'2-digit', minute:'2-digit', hour12: true
+            });
+        }
+        tick();
+        setInterval(tick, 30000);
+    </script>
+</body>
+</html>

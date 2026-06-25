@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New Customer — Real Tailors</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=Noto+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0d0d0d; --linen: #f5f0e8; --cream: #faf7f2;
+            --gold: #b8973a; --gold-light: #d4af5a; --muted: #7a7169;
+            --error: #c0392b;
+            --border: rgba(184,151,58,0.2); --input-bg: rgba(255,255,255,0.04);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ── BASE (dark) ── */
+        body { background: var(--ink); color: var(--linen); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding: 40px 30px; transition: background 0.3s, color 0.3s; }
+        body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(184,151,58,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(184,151,58,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+
+        .page-wrap { max-width: 1000px; margin: 0 auto; position: relative; z-index: 1; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+        .brand { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--gold); }
+        .page-title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; }
+        .page-subtitle { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .back-link { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--muted); text-decoration: none; text-transform: uppercase; border: 1px solid var(--border); padding: 8px 16px; transition: all 0.2s; }
+        .back-link:hover { border-color: var(--gold); color: var(--gold); }
+
+        /* Theme switcher pills */
+        .theme-switcher { display: flex; gap: 0; border: 1px solid var(--border); overflow: hidden; }
+        .theme-pill { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; background: transparent; border: none; padding: 8px 14px; cursor: pointer; color: var(--muted); transition: all 0.2s; border-right: 1px solid var(--border); }
+        .theme-pill:last-child { border-right: none; }
+        .theme-pill:hover { color: var(--linen); }
+        .theme-pill.active-dark  { background: rgba(255,255,255,0.06); color: var(--linen); }
+        .theme-pill.active-light { background: rgba(0,0,0,0.06); color: #333; }
+        .theme-pill.active-blue  { background: rgba(56,139,253,0.15); color: #60a5fa; }
+
+        /* Flash */
+        .flash { padding: 12px 20px; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.05em; margin-bottom: 24px; }
+        .flash.error { background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.4); color: #e07a6e; }
+        .flash.success { background: rgba(39,174,96,0.1); border: 1px solid rgba(39,174,96,0.35); color: #6fcf97; }
+
+        /* Section label */
+        .section-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* Meta strip */
+        .meta-strip { display: grid; grid-template-columns: 100px 1fr 1fr 1fr 180px; gap: 0; margin-bottom: 32px; border: 1px solid var(--border); }
+        .meta-field { padding: 0; }
+        .meta-field + .meta-field { border-left: 1px solid var(--border); }
+        .meta-field label { display: block; font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding: 8px 14px 4px; }
+        .meta-field input { display: block; width: 100%; background: var(--input-bg); border: none; color: var(--linen); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; padding: 6px 14px 12px; outline: none; transition: background 0.2s; }
+        .meta-field input:focus { background: rgba(184,151,58,0.06); }
+        .meta-field input::placeholder { color: rgba(122,113,105,0.5); }
+
+        /* Matrix table */
+        .matrix-table { width: 100%; border-collapse: collapse; border: 1px solid var(--border); margin-bottom: 32px; }
+        .matrix-table thead tr th { font-family: 'DM Mono', monospace; font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding: 10px 6px; border-bottom: 1px solid var(--border); text-align: center; font-weight: 400; }
+        .matrix-table thead tr th:first-child { text-align: left; padding-left: 20px; width: 110px; }
+        .cat-row { border-bottom: 1px solid rgba(184,151,58,0.1); }
+        .cat-row:last-child { border-bottom: none; }
+        .cat-row:hover { background: rgba(184,151,58,0.03); }
+        .cat-name { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); padding: 14px 20px; font-weight: 500; }
+        .slot-cell { padding: 8px 4px; text-align: center; }
+        .slot-cell input { width: 48px; text-align: center; background: var(--input-bg); border: 1px solid rgba(184,151,58,0.15); color: var(--linen); border-radius: 2px; padding: 7px 4px; font-family: 'Noto Sans', sans-serif; font-variant-numeric: diagonal-fractions; font-size: 0.9rem; outline: none; transition: all 0.2s; }
+        .slot-cell input:focus { border-color: var(--gold); background: rgba(184,151,58,0.06); }
+
+        /* Actions */
+        .action-row { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+        .btn-primary { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; background: var(--gold); color: var(--ink); border: none; padding: 14px 32px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+        .btn-primary:hover { background: var(--gold-light); }
+        .btn-ghost { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 13px 24px; cursor: pointer; transition: all 0.2s; }
+        .btn-ghost:hover { border-color: var(--error); color: #e07a6e; }
+        .shortcut-hint { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); border: 1px solid var(--border); padding: 10px 16px; line-height: 1.7; }
+        .shortcut-hint kbd { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 2px; }
+        .frac { font-family: 'Noto Sans', sans-serif; font-variant-numeric: diagonal-fractions; }
+
+        /* ── LIGHT THEME ── */
+        body.light { background: var(--cream); color: var(--ink); }
+        body.light .meta-field input { color: var(--ink); }
+        body.light .meta-field input::placeholder { color: rgba(0,0,0,0.3); }
+        body.light .slot-cell input { color: var(--ink); border-color: rgba(0,0,0,0.12); background: rgba(0,0,0,0.02); }
+        body.light .slot-cell input:focus { border-color: var(--gold); background: rgba(184,151,58,0.06); }
+        body.light .btn-primary { color: #fff; }
+        body.light .shortcut-hint kbd { background: rgba(0,0,0,0.08); }
+        body.light .theme-pill { color: #888; }
+        body.light .theme-pill:hover { color: #333; }
+
+        /* ── BLUE THEME ── */
+        body.blue { background: #060d1f; color: #dde6f8; }
+        body.blue::before { background-image: linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px); }
+        body.blue .brand { color: #60a5fa; }
+        body.blue .page-header { border-bottom-color: rgba(59,130,246,0.2); }
+        body.blue .back-link { border-color: rgba(59,130,246,0.2); color: #6b7fa3; }
+        body.blue .back-link:hover { border-color: #3b82f6; color: #93c5fd; }
+        body.blue .theme-switcher { border-color: rgba(59,130,246,0.2); }
+        body.blue .theme-pill { border-right-color: rgba(59,130,246,0.15); color: #4a6fa3; }
+        body.blue .theme-pill:hover { color: #93c5fd; }
+        body.blue .section-label { color: #60a5fa; }
+        body.blue .section-label::after { background: rgba(59,130,246,0.2); }
+        body.blue .meta-strip { border-color: rgba(59,130,246,0.2); }
+        body.blue .meta-field + .meta-field { border-left-color: rgba(59,130,246,0.15); }
+        body.blue .meta-field label { color: #4a6fa3; }
+        body.blue .meta-field input { color: #dde6f8; background: rgba(59,130,246,0.04); }
+        body.blue .meta-field input:focus { background: rgba(59,130,246,0.09); }
+        body.blue .meta-field input::placeholder { color: rgba(107,127,163,0.5); }
+        body.blue .matrix-table { border-color: rgba(59,130,246,0.2); }
+        body.blue .matrix-table thead tr th { color: #4a6fa3; border-bottom-color: rgba(59,130,246,0.15); }
+        body.blue .cat-row { border-bottom-color: rgba(59,130,246,0.08); }
+        body.blue .cat-row:hover { background: rgba(59,130,246,0.04); }
+        body.blue .cat-name { color: #60a5fa; }
+        body.blue .slot-cell input { border-color: rgba(59,130,246,0.2); color: #dde6f8; background: rgba(59,130,246,0.04); }
+        body.blue .slot-cell input:focus { border-color: #3b82f6; background: rgba(59,130,246,0.1); }
+        body.blue .btn-primary { background: #1d4ed8; color: #fff; }
+        body.blue .btn-primary:hover { background: #2563eb; }
+        body.blue .btn-ghost { border-color: rgba(59,130,246,0.2); color: #4a6fa3; }
+        body.blue .btn-ghost:hover { border-color: #ef4444; color: #fca5a5; }
+        body.blue .shortcut-hint { border-color: rgba(59,130,246,0.2); color: #4a6fa3; }
+        body.blue .shortcut-hint kbd { background: rgba(59,130,246,0.12); color: #93c5fd; }
+        body.blue .flash.error { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.35); color: #fca5a5; }
+        body.blue .flash.success { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); color: #86efac; }
+    </style>
+</head>
+<body class="{{ current_theme }}" id="pageBody">
+    <div class="page-wrap">
+
+        <div class="page-header">
+            <div>
+                <div class="brand">Real Tailors</div>
+                <div class="page-title">New Customer</div>
+                <div class="page-subtitle">Registration Form</div>
+            </div>
+            <div class="header-right">
+                <div class="theme-switcher" id="themeSwitcher">
+                    <button class="theme-pill" data-theme="dark" onclick="setTheme('dark')">◑ Dark</button>
+                    <button class="theme-pill" data-theme="light" onclick="setTheme('light')">◯ Light</button>
+                    <button class="theme-pill" data-theme="blue" onclick="setTheme('blue')">◈ Blue</button>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="back-link">← Dashboard</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="flash {{ category }}">▸ {{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('new_form') }}">
+
+            <div class="section-label">Customer Identity</div>
+            <div class="meta-strip">
+                <div class="meta-field">
+                    <label>Cust ID</label>
+                    <input type="text" name="cust_id" placeholder="Auto">
+                </div>
+                <div class="meta-field">
+                    <label>Full Name *</label>
+                    <input type="text" name="name" required placeholder="Customer name">
+                </div>
+                <div class="meta-field">
+                    <label>Mobile *</label>
+                    <input type="text" name="mobile" required placeholder="+91 XXXXX XXXXX">
+                </div>
+                <div class="meta-field">
+                    <label>Date</label>
+                    <input type="text" name="date" value="{{ today }}">
+                </div>
+                <div class="meta-field">
+                    <label>Entry Notes</label>
+                    <input type="text" name="notes" placeholder="Optional">
+                </div>
+            </div>
+
+            <div class="section-label">Measurement Matrix</div>
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        {% for i in range(1, 13) %}<th>{{ i }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in ['SHIRT', 'PANT', 'SUIT', 'KURTHA', 'EXTRA'] %}
+                    <tr class="cat-row">
+                        <td class="cat-name">{{ cat }}</td>
+                        {% for i in range(12) %}
+                        <td class="slot-cell"><input type="text" name="{{ cat.lower() }}_{{ i }}"></td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="action-row">
+                <button type="submit" class="btn-primary">✦ Save Customer</button>
+                <button type="reset" class="btn-ghost">✕ Reset Form</button>
+                <div class="shortcut-hint">
+                    <kbd>Alt + .</kbd> → <span class="frac">1/2</span> &nbsp;|&nbsp;
+                    <kbd>Alt + ,</kbd> → <span class="frac">1/4</span> &nbsp;|&nbsp;
+                    <kbd>Alt + /</kbd> → <span class="frac">3/4</span>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <script>
+        /* ── Theme logic ── */
+        const STORAGE_KEY = 'rt_page_theme';
+        const FLASK_THEME = '{{ current_theme }}'; // dark / light from session
+
+        function setTheme(t) {
+            document.getElementById('pageBody').className = t;
+            localStorage.setItem(STORAGE_KEY, t);
+            document.querySelectorAll('.theme-pill').forEach(btn => {
+                btn.className = 'theme-pill' + (btn.dataset.theme === t ? ' active-' + t : '');
+            });
+        }
+
+        // On load: prefer localStorage override, else use Flask session theme
+        (function() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            const initial = saved || FLASK_THEME || 'dark';
+            setTheme(initial);
+        })();
+
+        /* ── Fraction shortcuts ── */
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey) {
+                let val = "";
+                if (e.key === '.') val = "½";
+                else if (e.key === ',') val = "¼";
+                else if (e.key === '/') val = "¾";
+                if (val && document.activeElement.tagName === 'INPUT') {
+                    e.preventDefault();
+                    let s = document.activeElement.selectionStart;
+                    let end = document.activeElement.selectionEnd;
+                    let t = document.activeElement.value;
+                    document.activeElement.value = t.slice(0, s) + val + t.slice(end);
+                    document.activeElement.selectionStart = document.activeElement.selectionEnd = s + 1;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

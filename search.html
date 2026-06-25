@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search & Update — Real Tailors</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=Noto+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0d0d0d; --linen: #f5f0e8; --cream: #faf7f2;
+            --gold: #b8973a; --gold-light: #d4af5a; --muted: #7a7169;
+            --border: rgba(184,151,58,0.2); --input-bg: rgba(255,255,255,0.04);
+            --card-bg: rgba(255,255,255,0.03);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--ink); color: var(--linen); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding: 36px 30px; }
+        body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(184,151,58,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(184,151,58,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+        .page-wrap { max-width: 1080px; margin: 0 auto; position: relative; z-index: 1; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .brand { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--gold); }
+        .page-title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; }
+        .page-subtitle { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+        .back-link { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.1em; color: var(--muted); text-decoration: none; text-transform: uppercase; border: 1px solid var(--border); padding: 8px 16px; transition: all 0.2s; }
+        .back-link:hover { border-color: var(--gold); color: var(--gold); }
+
+        /* Search */
+        .search-strip { display: flex; gap: 0; margin-bottom: 32px; border: 1px solid var(--border); overflow: hidden; }
+        .search-strip input { flex: 1; background: var(--input-bg); border: none; color: var(--linen); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; padding: 14px 18px; outline: none; }
+        .search-strip input::placeholder { color: var(--muted); }
+        .search-strip button { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; background: var(--gold); color: var(--ink); border: none; padding: 0 28px; cursor: pointer; font-weight: 500; transition: background 0.2s; }
+        .search-strip button:hover { background: var(--gold-light); }
+        .btn-restart { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; background: rgba(192,57,43,0.12); color: #e07a6e; border: none; border-left: 1px solid var(--border); padding: 0 20px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; }
+        .btn-restart:hover { background: rgba(192,57,43,0.2); }
+
+        /* Tabs */
+        .tabs-nav { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+        .tab-btn { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; background: transparent; color: var(--muted); border: none; padding: 12px 24px; cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .tab-btn:hover { color: var(--linen); }
+        .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        /* Section label */
+        .section-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* Meta strip */
+        .meta-strip { display: grid; grid-template-columns: 80px 1fr 1fr 1fr; gap: 0; border: 1px solid var(--border); margin-bottom: 28px; }
+        .meta-field { padding: 0; }
+        .meta-field + .meta-field { border-left: 1px solid var(--border); }
+        .meta-field label { display: block; font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding: 8px 14px 4px; }
+        .meta-field input { display: block; width: 100%; background: var(--input-bg); border: none; color: var(--linen); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; padding: 6px 14px 12px; outline: none; transition: background 0.2s; }
+        .meta-field input:focus { background: rgba(184,151,58,0.06); }
+        .meta-field input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Matrix table */
+        .matrix-table { width: 100%; border-collapse: collapse; border: 1px solid var(--border); margin-bottom: 28px; }
+        .matrix-table thead th { font-family: 'DM Mono', monospace; font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding: 10px 6px; border-bottom: 1px solid var(--border); text-align: center; font-weight: 400; }
+        .matrix-table thead th:first-child { text-align: left; padding-left: 20px; width: 110px; }
+        .cat-row { border-bottom: 1px solid rgba(184,151,58,0.1); }
+        .cat-row:last-child { border-bottom: none; }
+        .cat-row:hover { background: rgba(184,151,58,0.03); }
+        .cat-name { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); padding: 14px 20px; }
+        .slot-cell { padding: 8px 4px; text-align: center; }
+        .slot-cell input { width: 48px; text-align: center; background: var(--input-bg); border: 1px solid rgba(184,151,58,0.15); color: var(--linen); border-radius: 2px; padding: 7px 4px; font-family: 'Noto Sans', sans-serif; font-variant-numeric: diagonal-fractions; font-size: 0.9rem; outline: none; transition: all 0.2s; }
+        .slot-cell input:focus { border-color: var(--gold); background: rgba(184,151,58,0.06); }
+
+        /* Bills history in search */
+        .bills-panel { border: 1px solid var(--border); margin-top: 28px; overflow: hidden; }
+        .bills-panel-hdr { padding: 12px 20px; border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
+        table.bills-hist { width: 100%; border-collapse: collapse; }
+        table.bills-hist th { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--border); font-weight: 400; text-align: center; }
+        table.bills-hist td { padding: 10px 14px; border-bottom: 1px solid rgba(184,151,58,0.07); text-align: center; font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+        table.bills-hist tr:last-child td { border-bottom: none; }
+        .status-pill { display: inline-block; padding: 3px 10px; border-radius: 1px; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; }
+        .status-pill.Delivered { background: rgba(39,174,96,0.15); color: #6fcf97; }
+        .status-pill.Pending { background: rgba(241,196,15,0.12); color: #f1c40f; }
+
+        /* Action row */
+        .action-row { display: flex; gap: 12px; align-items: center; }
+        .btn-primary { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; background: var(--gold); color: var(--ink); border: none; padding: 13px 28px; cursor: pointer; font-weight: 500; transition: background 0.2s; }
+        .btn-primary:hover { background: var(--gold-light); }
+
+        /* Print tab */
+        .print-controls { margin-bottom: 24px; }
+        .select-styled { background: var(--input-bg); color: var(--linen); border: 1px solid var(--border); padding: 12px 18px; font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; outline: none; cursor: pointer; transition: border-color 0.2s; -webkit-appearance: none; min-width: 200px; }
+        .select-styled:focus { border-color: var(--gold); }
+
+        .print-ticket { display: none; border: 1px solid var(--border); background: var(--card-bg); padding: 28px; margin-top: 20px; }
+        .print-ticket.visible { display: block; }
+        .ticket-header { margin-bottom: 20px; }
+        .ticket-cust { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--linen); }
+        .ticket-id { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+        .ticket-cat { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-top: 8px; }
+
+        table.meas-matrix { width: 100%; border-collapse: collapse; }
+        table.meas-matrix th { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: white; background: rgba(44,62,80,0.8); padding: 10px; border: 1px solid rgba(44,62,80,0.6); text-align: center; }
+        table.meas-matrix td { font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 500; text-align: center; padding: 16px 10px; border: 1px solid rgba(184,151,58,0.12); color: var(--linen); }
+
+        .print-btn { margin-top: 20px; font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; background: #27ae60; color: white; border: none; padding: 12px 28px; cursor: pointer; transition: background 0.2s; }
+        .print-btn:hover { background: #2ecc71; }
+
+        .empty-state { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--muted); padding: 40px; text-align: center; border: 1px solid var(--border); margin-top: 20px; }
+
+        /* Light mode */
+        body.light { background: var(--cream); color: var(--ink); }
+        body.light .search-strip input { color: var(--ink); }
+        body.light .meta-field input { color: var(--ink); }
+        body.light .slot-cell input { color: var(--ink); }
+        body.light table.meas-matrix td { color: var(--ink); }
+        body.light .ticket-cust { color: var(--ink); }
+        body.light .select-styled { color: var(--ink); }
+
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .page-header, .search-strip, .tabs-nav, .action-row, .print-controls { display: none !important; }
+            .tab-pane { display: block !important; }
+            .print-ticket { display: block !important; background: none; border: none; }
+            .ticket-cust { color: black !important; }
+            table.meas-matrix th { background: #ddd !important; color: black !important; }
+            table.meas-matrix td { color: black !important; border: 1px solid #000 !important; font-size: 1.3rem !important; }
+        }
+            /* Diagonal-slash fractions */
+        .frac, input.frac-input { font-family: 'Noto Sans', sans-serif; font-variant-numeric: diagonal-fractions; }
+        </style>
+</head>
+<body class="{{ current_theme }}">
+<div class="page-wrap">
+
+    <div class="page-header">
+        <div>
+            <div class="brand">Real Tailors</div>
+            <div class="page-title">Search & Update</div>
+            <div class="page-subtitle">Customer Records</div>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Dashboard</a>
+    </div>
+
+    <form method="GET" action="{{ url_for('search') }}" class="search-strip">
+        <input type="text" name="q" placeholder="Search by Name, Mobile, or Customer ID..." value="{{ query or '' }}">
+        <button type="submit">Search</button>
+        <a href="{{ url_for('search') }}" class="btn-restart">✕ Clear</a>
+    </form>
+
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-profile')">Customer Profile & Sizes</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-print')">Workshop Job Sheet</button>
+    </div>
+
+    <!-- Tab: Profile -->
+    <div id="tab-profile" class="tab-pane active">
+        {% if customer %}
+        <form method="POST" action="{{ url_for('update_customer') }}">
+            <input type="hidden" name="cust_id" value="{{ customer['CustID'] }}">
+
+            <div class="section-label">Identity</div>
+            <div class="meta-strip">
+                <div class="meta-field">
+                    <label>ID</label>
+                    <input type="text" value="{{ customer['CustID'] }}" disabled>
+                </div>
+                <div class="meta-field">
+                    <label>Full Name</label>
+                    <input type="text" name="name" value="{{ customer['Name'] }}">
+                </div>
+                <div class="meta-field">
+                    <label>Mobile</label>
+                    <input type="text" name="mobile" value="{{ customer['Mobile'] }}">
+                </div>
+                <div class="meta-field">
+                    <label>Date</label>
+                    <input type="text" name="date" value="{{ customer['Date'] }}">
+                </div>
+            </div>
+
+            <div class="section-label">Measurement Matrix</div>
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        {% for i in range(1, 13) %}<th>{{ i }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in ['SHIRT', 'PANT', 'SUIT', 'KURTHA', 'EXTRA'] %}
+                    <tr class="cat-row">
+                        <td class="cat-name">{{ cat }}</td>
+                        {% for i in range(12) %}
+                        <td class="slot-cell">
+                            <input type="text" name="{{ cat.lower() }}_{{ i }}" value="{{ measurements[cat][i] if measurements[cat] else '' }}">
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="action-row">
+                <button type="submit" class="btn-primary">✦ Update Profile</button>
+            </div>
+        </form>
+
+        {% if bills %}
+        <div class="bills-panel" style="margin-top: 32px;">
+            <div class="bills-panel-hdr">◈ Order History</div>
+            <table class="bills-hist">
+                <thead>
+                    <tr>
+                        <th>Bill ID</th><th>Date</th><th>Total</th><th>Balance Due</th><th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bill in bills %}
+                    <tr>
+                        <td><strong>#{{ bill['BillID'] }}</strong></td>
+                        <td>{{ bill['Date'] }}</td>
+                        <td>₹{{ "%.2f"|format(bill['Total_Amount']) }}</td>
+                        <td style="color:#e07a6e;">₹{{ "%.2f"|format(bill['Balance_Due']) }}</td>
+                        <td><span class="status-pill {{ bill['Status'] }}">{{ bill['Status'] }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">Search for a customer above to view and edit their profile.</div>
+        {% endif %}
+    </div>
+
+    <!-- Tab: Print -->
+    <div id="tab-print" class="tab-pane">
+        {% if customer %}
+        <div class="print-controls">
+            <div class="section-label">Print Control</div>
+            <label style="font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 10px;">Select Measurement Category</label>
+            <select class="select-styled" id="categoryPicker" onchange="generatePrintTicket()">
+                <option value="">— Choose Category —</option>
+                <option value="SHIRT">Shirt</option>
+                <option value="PANT">Pant</option>
+                <option value="SUIT">Suit</option>
+                <option value="KURTHA">Kurtha</option>
+                <option value="EXTRA">Extra</option>
+            </select>
+        </div>
+
+        <div class="print-ticket" id="targetTicket">
+            <div class="ticket-header">
+                <div class="ticket-cust">{{ customer['Name'] }}</div>
+                <div class="ticket-id">Customer ID: #{{ customer['CustID'] }}</div>
+                <div class="ticket-cat" id="ticketCategoryLabel">—</div>
+            </div>
+            <table class="meas-matrix">
+                <thead>
+                    <tr>{% for i in range(1,13) %}<th>{{ i }}</th>{% endfor %}</tr>
+                </thead>
+                <tbody>
+                    <tr id="ticketMeasurementsRow"></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button class="print-btn" id="printButtonTray" style="display:none;" onclick="window.print()">🖨 Print Job Sheet</button>
+
+        {% else %}
+        <div class="empty-state">Search for a customer to view the workshop job sheet.</div>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+    const customerMeasurementsLog = {
+        "SHIRT": {{ measurements['SHIRT']|tojson if customer else '[]' }},
+        "PANT": {{ measurements['PANT']|tojson if customer else '[]' }},
+        "SUIT": {{ measurements['SUIT']|tojson if customer else '[]' }},
+        "KURTHA": {{ measurements['KURTHA']|tojson if customer else '[]' }},
+        "EXTRA": {{ measurements['EXTRA']|tojson if customer else '[]' }}
+    };
+
+    function generatePrintTicket() {
+        const cat = document.getElementById('categoryPicker').value;
+        const ticket = document.getElementById('targetTicket');
+        const printBtn = document.getElementById('printButtonTray');
+        if (!cat) { ticket.classList.remove('visible'); printBtn.style.display = 'none'; return; }
+        document.getElementById('ticketCategoryLabel').innerText = cat;
+        const row = document.getElementById('ticketMeasurementsRow');
+        row.innerHTML = '';
+        const seg = customerMeasurementsLog[cat];
+        for (let i = 0; i < 12; i++) {
+            const td = document.createElement('td');
+            td.innerText = (seg && seg[i]) ? seg[i] : '—';
+            row.appendChild(td);
+        }
+        ticket.classList.add('visible');
+        printBtn.style.display = 'inline-block';
+    }
+
+    function switchTab(evt, tabId) {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
+</script>
+</body>
+</html>

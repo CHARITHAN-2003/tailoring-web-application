@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Billing — Real Tailors Navy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght=0,700;1,400&family=DM+Mono:wght=400;500&family=DM+Sans:wght=300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --gold: #7fa8d0; --gold-light: #b8d4ec; --gold-dim: rgba(127,168,208,0.12);
+            --bg: #080d14; --surface: #0d1520; --surface2: #111d2e;
+            --border: rgba(127,168,208,0.2); --text: #d0dce8; --muted: #5a7088;
+            --red: #c0392b; --green: #27ae60; --input-bg: #090e18;
+        }
+        body.light {
+            --bg: #eef2f7; --surface: #e2eaf4; --surface2: #d4e0ee;
+            --border: rgba(50,90,140,0.2); --text: #0d1a2e; --muted: #5a7090;
+            --gold: #2e6da4; --gold-light: #1a4f80; --gold-dim: rgba(46,109,164,0.1);
+            --input-bg: #f0f5fb;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 28px 24px 60px; transition: background 0.4s, color 0.4s; }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* ── Header ── */
+        .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+        .page-eyebrow { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; }
+        .page-title { font-family: 'Playfair Display', serif; font-size: 1.9rem; color: var(--gold-light); }
+        .back-link { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-decoration: none; border: 1px solid var(--border); padding: 8px 14px; border-radius: 3px; transition: color 0.2s, border-color 0.2s; }
+        .back-link:hover { color: var(--gold); border-color: var(--gold); }
+
+        /* ── Flash ── */
+        .flash { padding: 12px 18px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 0.8rem; border-left: 3px solid; margin-bottom: 16px; }
+        .flash.success { background: rgba(39,174,96,0.1); border-color: #27ae60; color: #5dde8a; }
+        .flash.error   { background: rgba(192,57,43,0.1); border-color: #c0392b; color: #e87060; }
+
+        /* ── Search strip ── */
+        .search-strip { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--border); padding: 14px 18px; border-radius: 4px; margin-bottom: 20px; }
+        .search-strip label { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+        .search-input { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 0.85rem; outline: none; transition: border-color 0.2s; width: 260px; }
+        .search-input:focus { border-color: var(--gold); }
+        .customer-badge { margin-left: auto; padding: 8px 16px; background: var(--gold-dim); border: 1px solid var(--border); border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 0.8rem; }
+        .customer-badge .cname { color: var(--gold-light); font-weight: 500; }
+        .customer-badge .cmeta { color: var(--muted); font-size: 0.7rem; }
+
+        /* ── Customer info card ── */
+        .cust-info-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 12px 18px; margin-bottom: 16px; display: flex; gap: 28px; flex-wrap: wrap; align-items: center; }
+        .cust-info-item .cust-info-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+        .cust-info-item .cust-info-value { font-family: 'DM Mono', monospace; font-size: 0.9rem; color: var(--gold-light); }
+        .edit-badge { font-family: 'DM Mono', monospace; font-size: 0.68rem; padding: 3px 10px; border-radius: 2px; background: rgba(255,193,7,0.15); color: #ffc107; border: 1px solid rgba(255,193,7,0.3); margin-left: auto; }
+        .new-badge  { font-family: 'DM Mono', monospace; font-size: 0.68rem; padding: 3px 10px; border-radius: 2px; background: rgba(39,174,96,0.15); color: #5dde8a; border: 1px solid rgba(39,174,96,0.3); margin-left: auto; }
+
+        /* ── History table ── */
+        .history-section { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-top: 24px; margin-bottom: 20px; overflow: hidden; }
+        .history-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+        .history-header-label { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); }
+        .history-hint { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); }
+        .history-scroll { overflow-x: auto; }
+        .history-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        .history-table th { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); text-align: center; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .history-table td { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--text); text-align: center; padding: 9px 10px; border-bottom: 1px solid rgba(127,168,208,0.06); }
+        .history-table tr:last-child td { border-bottom: none; }
+        .history-row { cursor: pointer; transition: background 0.2s; }
+        .history-row:hover td { background: var(--gold-dim); }
+        .h-bill-id { color: var(--gold); font-weight: 500; }
+        .h-due { color: #e87060; font-weight: 500; }
+        .h-status { font-size: 0.6rem; padding: 2px 7px; border-radius: 2px; }
+        .h-status-delivered { background: rgba(39,174,96,0.15); color: #5dde8a; }
+        .h-status-pending   { background: rgba(127,168,208,0.15); color: var(--gold); }
+
+        /* ── Two-column layout ── */
+        .billing-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+        .section { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 16px; overflow: hidden; }
+        .section-header { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); justify-content: space-between; }
+        .section-label { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); }
+        .section-body { padding: 18px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-family: 'DM Mono', monospace; font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+        .form-group input, .form-group select { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 0.85rem; width: 100%; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--gold); }
+        .form-group select option { background: #1e1b16; }
+
+        /* ── Items table ── */
+        .items-table { width: 100%; border-collapse: collapse; }
+        .items-table th { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+        .items-table td { padding: 6px 6px; vertical-align: middle; }
+        .items-table td.item-label { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--gold-light); letter-spacing: 0.1em; padding-left: 0; width: 90px; }
+        .items-table input { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 0.85rem; width: 100%; outline: none; transition: border-color 0.2s; text-align: center; }
+        .items-table input:focus { border-color: var(--gold); }
+        .subtotal-cell { font-family: 'DM Mono', monospace; font-size: 0.9rem; color: var(--gold-light); text-align: right; padding-right: 4px; font-weight: 500; width: 90px; }
+
+        /* ── Totals card ── */
+        .totals-card { background: var(--surface); border: 1px solid var(--gold); border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+        .totals-header { background: #0d2035; padding: 12px 18px; border-bottom: 1px solid var(--gold); }
+        .totals-header-text { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #b8d4ec; font-weight: 500; }
+        .totals-body { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+        .total-row { display: flex; justify-content: space-between; align-items: center; }
+        .total-label { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+        .total-value { font-family: 'DM Mono', monospace; font-size: 1rem; color: var(--text); }
+        .total-row.big .total-value { font-size: 1.3rem; color: var(--gold-light); font-weight: 500; }
+        .total-row.due-row .total-value { font-size: 1.3rem; color: #e87060; font-weight: 500; }
+        .divider-line { height: 1px; background: var(--border); }
+        .total-input { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 0.9rem; width: 100%; outline: none; transition: border-color 0.2s; text-align: right; }
+        .total-input:focus { border-color: var(--gold); }
+
+        /* ── Bill history list (sidebar) ── */
+        .bill-list { max-height: 240px; overflow-y: auto; }
+        .bill-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(127,168,208,0.08); cursor: pointer; transition: background 0.2s; }
+        .bill-item:hover { background: var(--gold-dim); }
+        .bill-item:last-child { border-bottom: none; }
+        .bill-id   { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--gold); }
+        .bill-date { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); }
+        .bill-amount { font-family: 'DM Mono', monospace; font-size: 0.85rem; color: var(--text); }
+        .bill-status { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; }
+        .status-delivered { background: rgba(39,174,96,0.15); color: #5dde8a; }
+        .status-pending   { background: rgba(127,168,208,0.15); color: var(--gold); }
+
+        /* ── Action buttons ── */
+        .action-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+        .btn { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 11px 18px; border: none; border-radius: 3px; cursor: pointer; text-decoration: none; transition: opacity 0.2s, transform 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        .btn-primary { background: #122848; color: #b8d4ec; border: 1px solid var(--gold); font-weight: 500; }
+        .btn-update  { background: rgba(255,193,7,0.15); color: #ffc107; border: 1px solid rgba(255,193,7,0.4); }
+        .btn-muted   { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-whatsapp{ background: #1a5c2e; color: #25d366; border: 1px solid #25d366; }
+        .btn-pdf     { background: rgba(127,168,208,0.12); color: #b8d4ec; border: 1px solid rgba(127,168,208,0.4); }
+
+        /* ── QR Modal ── */
+        .qr-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 9999; }
+        .qr-overlay.active { display: flex; }
+        .qr-card { background: #fff; padding: 28px 24px; border-radius: 8px; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,0.6); color: #1a1610; max-width: 300px; width: 90%; }
+        .qr-card h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: #1a365d; margin-bottom: 8px; }
+        .qr-card p { font-size: 0.82rem; color: #4a5568; margin-bottom: 16px; line-height: 1.5; }
+        .qr-canvas-wrap { margin: 0 auto 12px; width: 128px; height: 128px; background: #fff; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
+        .qr-contact-label { font-family: 'DM Mono', monospace; font-size: 0.82rem; font-weight: 600; color: #1a1610; margin-bottom: 14px; }
+        .qr-done-btn { width: 100%; padding: 10px; background: #1a365d; color: #fff; border: none; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+        .qr-done-btn:hover { background: #2b5797; }
+
+        /* ── Print styles ── */
+        @media print {
+            body { background: white !important; color: black !important; padding: 10px !important; }
+            .no-print { display: none !important; }
+            .print-receipt { display: block !important; }
+            .page-header, .search-strip, .billing-layout, .action-bar, .cust-info-card, .history-section { display: none !important; }
+            .tab-content { display: block !important; }
+        }
+
+        /* ── PDF Invoice (hidden on screen) ── */
+        #pdfInvoiceArea { display: none; }
+
+        /* ── Print Receipt (screen-hidden, print-shown) ── */
+        .print-receipt { display: none; }
+        @media print {
+            .print-receipt { display: block; font-family: 'DM Mono', monospace; color: black; max-width: 680px; margin: 0 auto; }
+            .receipt-shop { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; text-align: center; }
+            .receipt-sub  { text-align: center; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: #444; margin-bottom: 12px; }
+            .receipt-hr   { border: none; border-top: 2px solid black; margin: 10px 0; }
+            .receipt-hr.thin { border-top: 1px dashed #555; }
+            .receipt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 20px; margin-bottom: 12px; font-size: 0.8rem; }
+            .receipt-meta-row { display: flex; gap: 6px; }
+            .rkey { color: #555; min-width: 90px; }
+            .rval { font-weight: bold; }
+            .receipt-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.85rem; }
+            .receipt-table th { text-align: left; padding: 5px 8px; border-bottom: 1px solid black; font-size: 0.7rem; text-transform: uppercase; }
+            .receipt-table td { padding: 5px 8px; }
+            .receipt-totals table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+            .receipt-totals td { padding: 4px 0; }
+            .receipt-totals td:last-child { text-align: right; font-weight: bold; }
+            .receipt-due { font-size: 1.05rem; border-top: 2px solid black; padding-top: 8px; margin-top: 4px; }
+            .receipt-footer { text-align: center; margin-top: 20px; font-size: 0.7rem; color: #555; letter-spacing: 0.1em; }
+        }
+    
+        /* ══ Navy Polish ══ */
+        body::after { content:''; position:fixed; inset:0;
+            background: radial-gradient(ellipse 120% 80% at 20% 0%, rgba(30,80,140,0.18) 0%, transparent 60%),
+                        radial-gradient(ellipse 80% 60% at 80% 100%, rgba(10,40,90,0.2) 0%, transparent 55%);
+            pointer-events:none; z-index:0; }
+        .page-title { background: linear-gradient(135deg, #b8d4ec 0%, #7fa8d0 40%, #d8eaf8 70%, #9bbfd8 100%);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        input:focus, select:focus { box-shadow: 0 0 0 2px rgba(127,168,208,0.15); }
+        .section-header { border-left: 3px solid var(--gold); }
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-track { background:var(--surface); }
+        ::-webkit-scrollbar-thumb { background:rgba(127,168,208,0.3); border-radius:3px; }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(127,168,208,0.5); }
+
+
+        /* ── Quick-register panel ── */
+        .quick-reg-toggle { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; color: var(--gold); border: 1px dashed var(--gold); padding: 8px 14px; border-radius: 3px; cursor: pointer; transition: background 0.2s, color 0.2s; white-space: nowrap; }
+        .quick-reg-toggle:hover { background: var(--gold-dim); }
+        .quick-reg-toggle.open { background: var(--gold-dim); }
+
+        .quick-reg-panel {
+            display: none; background: var(--surface); border: 1px solid var(--gold);
+            border-radius: 4px; margin-bottom: 20px; overflow: hidden;
+        }
+        .quick-reg-panel.open { display: block; }
+        .quick-reg-header {
+            background: #0d2035; padding: 11px 18px; border-bottom: 1px solid var(--gold);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .quick-reg-title { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #b8d4ec; font-weight: 500; }
+        .quick-reg-close { background: none; border: none; color: #b8d4ec; font-size: 1.1rem; cursor: pointer; line-height: 1; padding: 0 4px; font-weight: bold; }
+        .quick-reg-body { padding: 18px; }
+        .quick-reg-grid { display: grid; grid-template-columns: 160px 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+        .quick-reg-group { display: flex; flex-direction: column; gap: 5px; }
+        .quick-reg-group label { font-family: 'DM Mono', monospace; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+        .quick-reg-group input { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 0.85rem; width: 100%; outline: none; transition: border-color 0.2s; }
+        .quick-reg-group input:focus { border-color: var(--gold); }
+        .quick-reg-note { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); margin-top: 12px; padding: 10px 12px; background: var(--gold-dim); border-radius: 3px; border-left: 3px solid var(--gold); }
+        .btn-reg-save { background: #122848; color: #b8d4ec; border: 1px solid var(--gold); font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 20px; border: none; border-radius: 3px; cursor: pointer; font-weight: 500; white-space: nowrap; transition: opacity 0.2s; align-self: end; height: 38px; }
+        .btn-reg-save:hover { opacity: 0.88; }
+
+    </style>
+</head>
+<body class="{{ current_theme }}">
+<div class="container">
+
+    <!-- ══ HEADER ══ -->
+    <div class="page-header no-print">
+        <div>
+            <div class="page-eyebrow">Real Tailors ERP</div>
+            <div class="page-title">Billing Form</div>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Dashboard</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="no-print">
+          {% for category, msg in messages %}
+            <div class="flash {{ category }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- ══ CUSTOMER SEARCH ══ -->
+    <form method="GET" action="{{ url_for('billing') }}" class="no-print">
+        <div class="search-strip">
+            <label>Find Customer:</label>
+            <input class="search-input" type="text" name="cust_id"
+                   placeholder="ID or Mobile number" value="{{ search_val or '' }}">
+            <button type="submit" class="btn btn-primary" style="padding:9px 18px;">Search</button>
+            <button type="button" class="quick-reg-toggle no-print" id="quickRegToggleBtn" onclick="toggleQuickReg()">+ New Customer</button>
+
+            {% if customer %}
+            <div class="customer-badge">
+                <div class="cname">{{ customer['Name'] }}</div>
+                <div class="cmeta">#{{ customer['CustID'] }} · {{ customer['Mobile'] }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- ══ QUICK CUSTOMER REGISTRATION PANEL ══ -->
+    <div class="quick-reg-panel no-print" id="quickRegPanel">
+        <div class="quick-reg-header">
+            <span class="quick-reg-title">✦ Register New Customer</span>
+            <button type="button" class="quick-reg-close" onclick="toggleQuickReg()">✕</button>
+        </div>
+        <div class="quick-reg-body">
+            <form method="POST" action="{{ url_for('new_form') }}" id="quickRegForm" onsubmit="return validateQuickReg()">
+                <input type="hidden" name="_redirect_to_billing" value="1">
+                <div class="quick-reg-grid">
+                    <div class="quick-reg-group">
+                        <label>Cust ID <span style="color:var(--muted);font-size:0.6rem;">(optional)</span></label>
+                        <input type="text" name="cust_id" id="qr_cust_id" placeholder="Auto">
+                    </div>
+                    <div class="quick-reg-group">
+                        <label>Full Name *</label>
+                        <input type="text" name="name" id="qr_name" placeholder="Customer name" autocomplete="off">
+                    </div>
+                    <div class="quick-reg-group">
+                        <label>Mobile *</label>
+                        <input type="text" name="mobile" id="qr_mobile" placeholder="10-digit number" autocomplete="off" maxlength="10">
+                    </div>
+                    <div class="quick-reg-group">
+                        <label>Date</label>
+                        <input type="text" name="date" id="qr_date" value="">
+                    </div>
+                    <button type="submit" class="btn-reg-save">Save & Load →</button>
+                </div>
+                <div class="quick-reg-note">
+                    ℹ Measurements can be added later via Search &amp; Update. This saves the customer and immediately loads them into the billing form.
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if customer or loaded_bill %}
+
+    {% set eff_cust_id   = customer['CustID']  if customer else loaded_bill['CustID'] %}
+    {% set eff_cust_name = customer['Name']     if customer else '' %}
+    {% set eff_cust_mob  = customer['Mobile']   if customer else '' %}
+
+    <!-- ══ CUSTOMER INFO STRIP ══ -->
+    <div class="cust-info-card no-print" id="custInfoCard">
+        <div class="cust-info-item">
+            <div class="cust-info-label">Customer ID</div>
+            <div class="cust-info-value" id="screen_cust_id">#{{ eff_cust_id }}</div>
+        </div>
+        {% if eff_cust_name %}
+        <div class="cust-info-item">
+            <div class="cust-info-label">Name</div>
+            <div class="cust-info-value" id="screen_cust_name">{{ eff_cust_name }}</div>
+        </div>
+        {% endif %}
+        {% if eff_cust_mob %}
+        <div class="cust-info-item">
+            <div class="cust-info-label">Mobile</div>
+            <div class="cust-info-value" id="screen_cust_mobile">{{ eff_cust_mob }}</div>
+        </div>
+        {% endif %}
+        {% if loaded_bill %}
+        <span class="edit-badge">⚠ Editing Bill #{{ loaded_bill['BillID'] }}</span>
+        {% else %}
+        <span class="new-badge">✦ New Bill</span>
+        {% endif %}
+    </div>
+
+    <!-- ══ BILLING FORM ══ -->
+    <form id="billingForm" method="POST" action="{{ url_for('save_bill') }}">
+        <input type="hidden" name="cust_id" id="customerIdField" value="{{ eff_cust_id }}">
+        <input type="hidden" name="bill_id" value="{{ loaded_bill['BillID'] if loaded_bill else '' }}">
+
+        <div class="billing-layout no-print">
+
+            <!-- LEFT -->
+            <div>
+                <!-- Bill Details -->
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-label">◈ Bill Details</span>
+                        {% if loaded_bill %}<span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--gold);">Bill #{{ loaded_bill['BillID'] }}</span>{% endif %}
+                    </div>
+                    <div class="section-body">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="text" id="src_date" name="date" value="{{ loaded_bill['Date'] if loaded_bill else today }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Delivery Date *</label>
+                                <input type="text" id="src_delivery" name="delivery_date" placeholder="DD-MM-YYYY" value="{{ loaded_bill['Delivery_Date'] if loaded_bill else '' }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Bill Book No.</label>
+                                <input type="text" id="src_book" name="bill_book_no" value="{{ loaded_bill['Bill_Book_No'] if loaded_bill else '' }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status" id="src_status">
+                                    <option value="Pending"   {% if not loaded_bill or loaded_bill['Status']=='Pending'   %}selected{% endif %}>Pending</option>
+                                    <option value="Completed" {% if loaded_bill and loaded_bill['Status']=='Completed'     %}selected{% endif %}>Completed</option>
+                                    <option value="Delivered" {% if loaded_bill and loaded_bill['Status']=='Delivered'     %}selected{% endif %}>Delivered</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items & Pricing -->
+                <div class="section">
+                    <div class="section-header"><span class="section-label">✦ Items & Pricing</span></div>
+                    <div class="section-body" style="padding:14px 18px;">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:90px;">Item</th>
+                                    <th>Qty</th>
+                                    <th>Price (₹)</th>
+                                    <th style="text-align:right;width:90px;">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set items_cfg = [
+                                    ('SHIRT',  'shirt',  loaded_bill['Shirt_Q']  if loaded_bill else 0, loaded_bill['Shirt_P']  if loaded_bill else 350),
+                                    ('PANT',   'pant',   loaded_bill['Pant_Q']   if loaded_bill else 0, loaded_bill['Pant_P']   if loaded_bill else 450),
+                                    ('SUIT',   'suit',   loaded_bill['Suit_Q']   if loaded_bill else 0, loaded_bill['Suit_P']   if loaded_bill else 2500),
+                                    ('KURTHA', 'kurtha', loaded_bill['Kurtha_Q'] if loaded_bill else 0, loaded_bill['Kurtha_P'] if loaded_bill else 600),
+                                ] %}
+                                {% for label, key, qty, price in items_cfg %}
+                                <tr class="item-row" data-category="{{ label }}">
+                                    <td class="item-label">{{ label }}</td>
+                                    <td><input type="number" name="{{ key }}_q" class="qty" min="0" value="{{ qty }}" oninput="runCalculations()"></td>
+                                    <td><input type="number" name="{{ key }}_p" class="price" min="0" step="0.01" value="{{ price }}" oninput="runCalculations()"></td>
+                                    <td class="subtotal-cell" id="sub_{{ key }}">₹0</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div>
+                <!-- Payment Summary -->
+                <div class="totals-card">
+                    <div class="totals-header">
+                        <span class="totals-header-text">Payment Summary</span>
+                    </div>
+                    <div class="totals-body">
+                        <div class="total-row big">
+                            <span class="total-label">Current Total</span>
+                            <span class="total-value" id="current_total_display">₹0.00</span>
+                        </div>
+                        <input type="hidden" name="current_total" id="current_total" value="0">
+
+                        <div class="form-group">
+                            <label>Cloth Payment (₹)</label>
+                            <input type="number" class="total-input" name="cloth_price" id="clothInput"
+                                   min="0" step="0.01"
+                                   value="{{ loaded_bill['Cloth_Price'] if loaded_bill and loaded_bill['Cloth_Price'] else 0 }}"
+                                   oninput="runCalculations()" placeholder="0.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Discount (₹)</label>
+                            <input type="number" class="total-input" name="discount_amount" id="discountInput"
+                                   min="0" step="0.01"
+                                   value="{{ loaded_bill['Discount'] if loaded_bill and loaded_bill['Discount'] else 0 }}"
+                                   oninput="runCalculations()" placeholder="0.00">
+                        </div>
+
+                        <div class="total-row">
+                            <span class="total-label">Previous Balance</span>
+                            <span class="total-value" id="prev_bal_display" style="color:#e87060;">₹{{ "%.2f"|format(prev_balance) }}</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Advance / Paid Now (₹)</label>
+                            <input type="number" class="total-input" name="paid_amount" id="paidInput"
+                                   min="0" step="0.01"
+                                   value="{{ loaded_bill['Paid_Amount'] if loaded_bill else 0 }}"
+                                   oninput="runCalculations()" placeholder="0.00">
+                        </div>
+
+                        <div class="divider-line"></div>
+                        <div class="total-row due-row">
+                            <span class="total-label">Net Balance Due</span>
+                            <span class="total-value" id="netDueLabel">₹—</span>
+                        </div>
+                        <input type="hidden" name="net_balance_due" id="hiddenNetDue" value="0">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-bar">
+                    {% if loaded_bill %}
+                    <button type="button" class="btn btn-update" onclick="triggerSaveSequence('update')">⟳ Update Bill</button>
+                    <a href="{{ url_for('billing', cust_id=eff_cust_id) }}" class="btn btn-muted">✕ Exit Edit</a>
+                    {% else %}
+                    <button type="button" class="btn btn-primary" onclick="triggerSaveSequence('save')">✦ Save Bill</button>
+                    {% endif %}
+                    <button type="button" class="btn btn-whatsapp" onclick="sendBillWhatsApp()">📱 WhatsApp</button>
+                    <button type="button" class="btn btn-pdf" onclick="downloadPDF()">⬇ PDF Bill</button>
+                    <button type="button" class="btn btn-muted" onclick="window.print()">🖨 Print</button>
+                </div>
+
+                <!-- Sidebar bill list -->
+                {% if all_bills %}
+                <div class="section" style="margin-top:16px;">
+                    <div class="section-header">
+                        <span class="section-label">⌗ Bill History</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);">{{ all_bills|length }} bills</span>
+                    </div>
+                    <div class="bill-list">
+                        {% for bill in all_bills %}
+                        <div class="bill-item" onclick="window.location.href='{{ url_for('billing', cust_id=eff_cust_id, load_bill_id=bill['BillID']) }}'">
+                            <div>
+                                <div class="bill-id">#{{ bill['BillID'] }}{% if loaded_bill and loaded_bill['BillID']==bill['BillID'] %} ◀{% endif %}</div>
+                                <div class="bill-date">{{ bill['Date'] }}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div class="bill-amount">₹{{ "%.0f"|format(bill['Total_Amount']) }}</div>
+                                <span class="bill-status {{ 'status-delivered' if bill['Status']=='Delivered' else 'status-pending' }}">{{ bill['Status'] }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div><!-- /billing-layout -->
+    </form>
+
+    <!-- ══ Previous Bills table (page bottom area) ══ -->
+    {% if all_bills %}
+    <div class="history-section no-print">
+        <div class="history-header">
+            <span class="history-header-label">⌗ Previous Bills</span>
+            <span class="history-hint">Single-click any row to load it into the form</span>
+        </div>
+        <div class="history-scroll">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Bill ID</th><th>Date</th><th>Book No</th>
+                        <th>Shirt</th><th>Pant</th><th>Suit</th><th>Kurtha</th>
+                        <th>Total</th><th>Due</th><th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in all_bills %}
+                    <tr class="history-row"
+                        onclick="window.location.href='{{ url_for('billing', cust_id=eff_cust_id, load_bill_id=b['BillID']) }}'">
+                        <td class="h-bill-id">#{{ b['BillID'] }}{% if loaded_bill and loaded_bill['BillID']==b['BillID'] %} ◀{% endif %}</td>
+                        <td>{{ b['Date'] }}</td>
+                        <td>{{ b['Bill_Book_No'] or '—' }}</td>
+                        <td>{{ b['Shirt_Q'] }}</td>
+                        <td>{{ b['Pant_Q'] }}</td>
+                        <td>{{ b['Suit_Q'] }}</td>
+                        <td>{{ b['Kurtha_Q'] }}</td>
+                        <td class="h-total">{{ b['Total_Amount'] }}</td>
+                        <td class="h-due">{{ b['Balance_Due'] }}</td>
+                        <td><span class="h-status {{ 'h-status-delivered' if b['Status']=='Delivered' else 'h-status-pending' }}">{{ b['Status'] }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ══ PRINT RECEIPT (shown only on Ctrl+P print) ══ -->
+    <div class="print-receipt">
+        <div class="receipt-shop">Real Tailors</div>
+        <div class="receipt-sub">Bill / Receipt</div>
+        <hr class="receipt-hr">
+        <div class="receipt-meta">
+            <div class="receipt-meta-row"><span class="rkey">Cust ID :</span><span class="rval">#{{ eff_cust_id }}</span></div>
+            <div class="receipt-meta-row"><span class="rkey">Bill No :</span><span class="rval" id="pr_bill_no">{% if loaded_bill %}#{{ loaded_bill['BillID'] }}{% else %}New{% endif %}</span></div>
+            <div class="receipt-meta-row"><span class="rkey">Name :</span><span class="rval">{{ eff_cust_name or '—' }}</span></div>
+            <div class="receipt-meta-row"><span class="rkey">Mobile :</span><span class="rval">{{ eff_cust_mob or '—' }}</span></div>
+            <div class="receipt-meta-row"><span class="rkey">Date :</span><span class="rval" id="pr_date">{{ loaded_bill['Date'] if loaded_bill else today }}</span></div>
+            <div class="receipt-meta-row"><span class="rkey">Delivery :</span><span class="rval" id="pr_del">{{ loaded_bill['Delivery_Date'] if loaded_bill else '—' }}</span></div>
+            <div class="receipt-meta-row"><span class="rkey">Book No :</span><span class="rval" id="pr_book">{{ loaded_bill['Bill_Book_No'] if loaded_bill else '—' }}</span></div>
+            <div class="receipt-meta-row"><span class="rkey">Status :</span><span class="rval" id="pr_status">{{ loaded_bill['Status'] if loaded_bill else 'Pending' }}</span></div>
+        </div>
+        <hr class="receipt-hr">
+        <table class="receipt-table">
+            <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Price</th><th style="text-align:right;">Subtotal</th></tr></thead>
+            <tbody id="pr_rows"></tbody>
+        </table>
+        <hr class="receipt-hr thin">
+        <div class="receipt-totals">
+            <table>
+                <tr><td>Bill Total</td><td id="pr_total">₹0.00</td></tr>
+                <tr id="pr_cloth_row_receipt"><td>Cloth Payment (+)</td><td id="pr_cloth_receipt">₹0.00</td></tr>
+                <tr id="pr_discount_row" style="display:none;"><td>Discount (–)</td><td id="pr_discount">₹0.00</td></tr>
+                <tr id="pr_prev_row" style="{{ 'display:none' if prev_balance == 0 else '' }}"><td>Previous Balance</td><td style="color:#c0392b;">₹{{ "%.2f"|format(prev_balance) }}</td></tr>
+                <tr><td>Advance Paid</td><td id="pr_paid">₹0.00</td></tr>
+                <tr class="receipt-due"><td><strong>Net Balance Due</strong></td><td id="pr_due"><strong>₹—</strong></td></tr>
+            </table>
+        </div>
+        <div class="receipt-footer">Thank you for choosing Real Tailors · Please keep this receipt</div>
+    </div>
+
+    <!-- ══ PDF INVOICE (hidden div used by html2pdf) ══ -->
+    <div id="pdfInvoiceArea">
+        <div style="font-family:Arial,sans-serif;color:#2d3748;background:#fff;padding:30px;max-width:780px;margin:0 auto;box-sizing:border-box;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #1a365d;padding-bottom:12px;margin-bottom:18px;">
+                <div>
+                    <h1 style="margin:0;font-size:24px;font-weight:bold;color:#1a365d;letter-spacing:0.5px;text-transform:uppercase;">REAL TAILORS</h1>
+                    <p style="margin:5px 0 0;font-size:11px;color:#4a5568;line-height:1.5;">
+                        <strong>Address:</strong> Real Tailors, opp andhra bank (UNION BANK) street,<br>
+                        kodad road, jaggayyapet, Andhra Pradesh - 521175.
+                    </p>
+                </div>
+                <div style="text-align:right;font-size:11.5px;line-height:1.6;color:#2d3748;">
+                    <div><strong>Owner:</strong> RAVI BABU</div>
+                    <div><strong>Mobile:</strong> +91 9290517089</div>
+                </div>
+            </div>
+
+            <div style="font-size:11.5px;font-weight:bold;border:1px solid #cbd5e0;background:#f7fafc;padding:8px 10px;margin-bottom:15px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;color:#2d3748;">
+                <div>Cust ID: <span id="p_cust_id" style="color:#1a365d;">—</span> &nbsp;|&nbsp; Name: <span id="p_cust_name">—</span> &nbsp;|&nbsp; Mobile: <span id="p_cust_mobile">—</span></div>
+                <div id="p_edit_label" style="font-size:11px;color:#b7791f;"></div>
+            </div>
+
+            <div style="display:flex;gap:15px;margin-bottom:15px;">
+                <div style="flex:1;">
+                    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                        <tr><td style="padding:5px 8px;border:1px solid #cbd5e0;font-weight:bold;background:#edf2f7;color:#4a5568;width:40%;">Date:</td><td style="padding:5px 8px;border:1px solid #cbd5e0;" id="p_date"></td></tr>
+                        <tr><td style="padding:5px 8px;border:1px solid #cbd5e0;font-weight:bold;background:#edf2f7;color:#4a5568;">Bill Book No:</td><td style="padding:5px 8px;border:1px solid #cbd5e0;" id="p_book"></td></tr>
+                    </table>
+                </div>
+                <div style="flex:1;">
+                    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                        <tr><td style="padding:5px 8px;border:1px solid #cbd5e0;font-weight:bold;background:#edf2f7;color:#4a5568;width:40%;">Delivery Date:</td><td style="padding:5px 8px;border:1px solid #cbd5e0;" id="p_delivery"></td></tr>
+                        <!-- 🟢 FIXED STRUCTURAL BLOCK HERE: Added missing data field display TD container mapping block -->
+                        <tr><td style="padding:5px 8px;border:1px solid #cbd5e0;font-weight:bold;background:#edf2f7;color:#4a5568;">Status:</td><td style="padding:5px 8px;border:1px solid #cbd5e0;font-weight:bold;color:#b7791f;" id="p_status_pdf"></td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:11.5px;border:1px solid #cbd5e0;">
+                <thead>
+                    <tr style="background:#1a365d;color:#fff;">
+                        <th style="text-align:left;padding:8px 10px;border:1px solid #1a365d;">Category</th>
+                        <th style="text-align:center;padding:8px 10px;border:1px solid #1a365d;width:15%;">Qty</th>
+                        <th style="text-align:right;padding:8px 10px;border:1px solid #1a365d;width:20%;">Price (₹)</th>
+                        <th style="text-align:right;padding:8px 10px;border:1px solid #1a365d;width:22%;">Total (₹)</th>
+                    </tr>
+                </thead>
+                <tbody id="p_ledger_body" style="color:#2d3748;"></tbody>
+            </table>
+
+            <div style="display:flex;justify-content:flex-end;">
+                <table style="width:45%;border-collapse:collapse;font-size:11.5px;border:1px solid #cbd5e0;">
+                    <tr><td style="padding:6px 8px;border:1px solid #cbd5e0;background:#f7fafc;color:#4a5568;width:55%;">Current Bill Total:</td><td style="padding:6px 8px;border:1px solid #cbd5e0;text-align:right;font-weight:bold;" id="p_total_pdf">₹0.00</td></tr>
+                    <tr><td style="padding:6px 8px;border:1px solid #cbd5e0;background:#f7fafc;color:#4a5568;">Cloth Payment (+):</td><td style="padding:6px 8px;border:1px solid #cbd5e0;text-align:right;font-weight:bold;" id="p_cloth_pdf">₹0.00</td></tr>
+                    <tr id="p_discount_row" style="display:none;"><td style="padding:6px 8px;border:1px solid #cbd5e0;background:#fff8e1;color:#7b5500;">Discount (–):</td><td style="padding:6px 8px;border:1px solid #cbd5e0;text-align:right;font-weight:bold;color:#2b5797;" id="p_discount_pdf">₹0.00</td></tr>
+                    <tr id="p_prev_row_pdf" style="display:none;"><td style="padding:6px 8px;border:1px solid #cbd5e0;background:#fff5f5;color:#4a5568;">Previous Balance:</td><td style="padding:6px 8px;border:1px solid #cbd5e0;text-align:right;color:#dc3545;font-weight:bold;" id="p_prev_pdf">₹0.00</td></tr>
+                    <tr><td style="padding:6px 8px;border:1px solid #cbd5e0;background:#f7fafc;color:#4a5568;">Advance Paid:</td><td style="padding:6px 8px;border:1px solid #cbd5e0;text-align:right;color:#28a745;font-weight:bold;" id="p_advance_pdf">₹0.00</td></tr>
+                    <tr style="font-weight:bold;background:#edf2f7;"><td style="padding:8px;border:1.5px solid #1a365d;font-size:12px;color:#1a365d;">NET BALANCE DUE:</td><td style="padding:8px;border:1.5px solid #1a365d;text-align:right;font-size:12.5px;color:#1a365d;" id="p_due_pdf">₹0.00</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="no-print" style="text-align:center;padding:60px 20px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.85rem;letter-spacing:0.08em;">
+        Search for a customer above to load their billing profile.
+    </div>
+    {% endif %}
+
+</div><!-- /container -->
+
+<!-- ══ QR MODAL ══ -->
+<div id="qrModal" class="qr-overlay">
+    <div class="qr-card">
+        <h3>📱 Save Contact to Mobile</h3>
+        <p>Scan this code with your phone camera to instantly add this customer to your contacts.</p>
+        <div class="qr-canvas-wrap"><div id="qrcode_canvas"></div></div>
+        <div class="qr-contact-label" id="qr_contact_info"></div>
+        <button class="qr-done-btn" onclick="closeQRAndSubmit()">Done & Continue →</button>
+    </div>
+</div>
+
+<script>
+    const PREV_BALANCE = {{ prev_balance | float }};
+    let globalFormMode = 'save';
+
+    const ITEMS = [
+        { key: 'shirt',  label: 'Shirt',  sub: 'sub_shirt'  },
+        { key: 'pant',   label: 'Pant',   sub: 'sub_pant'   },
+        { key: 'suit',   label: 'Suit',   sub: 'sub_suit'   },
+        { key: 'kurtha', label: 'Kurtha', sub: 'sub_kurtha' },
+    ];
+
+    // ── Indian Rupee formatter ────────────────────────────────────────────
+    function fmtINR(amount) {
+        let x = parseFloat(amount) || 0;
+        let parts = x.toFixed(2).split('.');
+        let num = parts[0], dec = parts[1];
+        if (num.length <= 3) return '₹' + num + '.' + dec;
+        let last3 = num.slice(-3);
+        let rest = num.slice(0, -3);
+        let fmt = '';
+        while (rest.length > 2) { fmt = ',' + rest.slice(-2) + fmt; rest = rest.slice(0, -2); }
+        if (rest) fmt = rest + fmt;
+        return '₹' + fmt + ',' + last3 + '.' + dec;
+    }
+
+    function getVal(name) {
+        const el = document.querySelector(`[name="${name}"]`);
+        return el ? (parseFloat(el.value) || 0) : 0;
+    }
+
+    // ── Core calculation ──────────────────────────────────────────────────
+    function runCalculations() {
+        let total = 0;
+        ITEMS.forEach(item => {
+            const q = getVal(item.key + '_q');
+            const p = getVal(item.key + '_p');
+            const sub = q * p;
+            total += sub;
+            const el = document.getElementById(item.sub);
+            if (el) el.textContent = fmtINR(sub);
+        });
+
+        document.getElementById('current_total_display').textContent = fmtINR(total);
+        document.getElementById('current_total').value = total.toFixed(2);
+
+        // Sync the on-screen display line for Previous Balance
+        const prevBalEl = document.getElementById('prev_bal_display');
+        if (prevBalEl) {
+            prevBalEl.textContent = fmtINR(PREV_BALANCE);
+        }
+
+        const clothCost = parseFloat(document.getElementById('clothInput')?.value) || 0;
+        const discount  = getVal('discount_amount');
+        const paid      = parseFloat(document.getElementById('paidInput')?.value) || 0;
+        const netDue    = total + clothCost + PREV_BALANCE - discount - paid;
+
+        document.getElementById('netDueLabel').textContent = fmtINR(netDue);
+        document.getElementById('hiddenNetDue').value = netDue.toFixed(2);
+
+        // Sync print receipt
+        syncPrint(total, clothCost, discount, paid, netDue);
+    }
+
+    // ── Sync browser print receipt ────────────────────────────────────────
+    function syncPrint(total, clothCost, discount, paid, netDue) {
+        const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val||'—'; };
+        set('pr_date',     document.getElementById('src_date')?.value);
+        set('pr_del',      document.getElementById('src_delivery')?.value);
+        set('pr_book',     document.getElementById('src_book')?.value);
+        set('pr_status',   document.getElementById('src_status')?.value);
+        set('pr_total',    fmtINR(total));
+        set('pr_cloth_receipt', fmtINR(clothCost));
+        
+        // Discount row: show only if discount > 0
+        const prDiscRow = document.getElementById('pr_discount_row');
+        if (prDiscRow) {
+            if (discount > 0) {
+                prDiscRow.style.display = '';
+                set('pr_discount', fmtINR(discount));
+            } else {
+                prDiscRow.style.display = 'none';
+            }
+        }
+        set('pr_paid',     fmtINR(paid));
+        const prDue = document.getElementById('pr_due');
+        if (prDue) prDue.innerHTML = '<strong>' + fmtINR(netDue) + '</strong>';
+
+        // Previous balance row: always show when discount > 0, else only if PREV_BALANCE > 0
+        const prPrevRow = document.getElementById('pr_prev_row');
+        if (prPrevRow) prPrevRow.style.display = (discount > 0 || PREV_BALANCE > 0) ? '' : 'none';
+
+        // Rebuild item rows
+        const tbody = document.getElementById('pr_rows');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        let hasAny = false;
+        ITEMS.forEach(item => {
+            const q = getVal(item.key+'_q'), p = getVal(item.key+'_p');
+            if (!q && !p) return;
+            hasAny = true;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${item.label}</td><td style="text-align:center;">${q}</td><td style="text-align:right;">${p.toFixed(2)}</td><td style="text-align:right;">${(q*p).toFixed(2)}</td>`;
+            tbody.appendChild(tr);
+        });
+        if (!hasAny) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;">No items</td></tr>';
+        const tTr = document.createElement('tr');
+        tTr.innerHTML = `<td colspan="3"><strong>Grand Total</strong></td><td style="text-align:right;"><strong>${fmtINR(total)}</strong></td>`;
+        tbody.appendChild(tTr);
+    }
+
+    // ── Build PDF invoice data ────────────────────────────────────────────
+    function buildPDFData() {
+        const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val||'—'; };
+        set('p_cust_id',     document.getElementById('screen_cust_id')?.textContent?.replace('#',''));
+        set('p_cust_name',   document.getElementById('screen_cust_name')?.textContent);
+        set('p_cust_mobile', document.getElementById('screen_cust_mobile')?.textContent);
+        set('p_date',        document.getElementById('src_date')?.value);
+        set('p_delivery',    document.getElementById('src_delivery')?.value);
+        set('p_book',        document.getElementById('src_book')?.value);
+        set('p_status_pdf',  document.getElementById('src_status')?.value);
+        {% if loaded_bill %}
+        set('p_edit_label',  '[⚠ EDITING BILL #{{ loaded_bill["BillID"] }}]');
+        {% endif %}
+
+        const total    = parseFloat(document.getElementById('current_total')?.value) || 0;
+        const clothCost = parseFloat(document.getElementById('clothInput')?.value) || 0;
+        const discount = getVal('discount_amount');
+        const paid     = parseFloat(document.getElementById('paidInput')?.value) || 0;
+        const netDue   = total + clothCost + PREV_BALANCE - discount - paid;
+
+        set('p_total_pdf',    fmtINR(total));
+        set('p_cloth_pdf',    fmtINR(clothCost));
+        
+        // Discount row: show only if discount > 0
+        const pDiscRow = document.getElementById('p_discount_row');
+        if (pDiscRow) {
+            if (discount > 0) {
+                pDiscRow.style.display = '';
+                set('p_discount_pdf', fmtINR(discount));
+            } else {
+                pDiscRow.style.display = 'none';
+            }
+        }
+        set('p_prev_pdf',     fmtINR(PREV_BALANCE));
+        set('p_advance_pdf',  fmtINR(paid));
+        set('p_due_pdf',      fmtINR(netDue));
+
+        const tbody = document.getElementById('p_ledger_body');
+        tbody.innerHTML = '';
+        let hasAny = false;
+        ITEMS.forEach(item => {
+            const q = getVal(item.key+'_q'), p = getVal(item.key+'_p');
+            if (!q && !p) return;
+            hasAny = true;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding:6px 10px;border:1px solid #cbd5e0;"><strong>${item.label}</strong></td>
+                <td style="padding:6px 10px;border:1px solid #cbd5e0;text-align:center;">${q}</td>
+                <td style="padding:6px 10px;border:1px solid #cbd5e0;text-align:right;">${fmtINR(p)}</td>
+                <td style="padding:6px 10px;border:1px solid #cbd5e0;text-align:right;font-weight:bold;">${fmtINR(q*p)}</td>`;
+            tbody.appendChild(tr);
+        });
+        if (!hasAny) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#888;padding:16px;border:1px solid #cbd5e0;">No items entered.</td></tr>`;
+    }
+
+    // ── Download PDF ──────────────────────────────────────────────────────
+    function downloadPDF() {
+        const custId = document.getElementById('customerIdField').value || 'X';
+        buildPDFData();
+        const area = document.getElementById('pdfInvoiceArea');
+        area.style.display = 'block';
+        const opts = {
+            margin: 12,
+            filename: 'RealTailors_Bill_Cust_' + custId + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2.5, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opts).from(area).save().then(() => { area.style.display = 'none'; });
+    }
+
+    // ── WhatsApp send ─────────────────────────────────────────────────────
+    function sendBillWhatsApp() {
+        const custId = document.getElementById('customerIdField').value;
+        const mobile = document.getElementById('screen_cust_mobile')?.textContent?.trim();
+
+        if (!custId || !mobile || mobile === '—') {
+            alert('Please load a valid customer profile before sending to WhatsApp.');
+            return;
+        }
+
+        buildPDFData();
+        const area = document.getElementById('pdfInvoiceArea');
+        area.style.display = 'block';
+
+        const opts = {
+            margin: 12,
+            filename: 'RealTailors_Bill_Cust_' + custId + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2.0, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opts).from(area).outputPdf('blob').then(function(pdfBlob) {
+            area.style.display = 'none';
+
+            const payload = new FormData();
+            payload.append('bill_pdf', pdfBlob, 'RealTailors_Bill_Cust_' + custId + '.pdf');
+            payload.append('delivery_date', document.getElementById('src_delivery')?.value || '');
+            payload.append('balance_due', document.getElementById('hiddenNetDue').value);
+            payload.append('cloth_price', document.getElementById('clothInput').value || 0);
+            payload.append('current_total', document.getElementById('current_total').value || 0);
+            payload.append('shirt_q',  document.querySelector('[name="shirt_q"]')?.value  || 0);
+            payload.append('pant_q',   document.querySelector('[name="pant_q"]')?.value   || 0);
+            payload.append('suit_q',   document.querySelector('[name="suit_q"]')?.value   || 0);
+            payload.append('kurtha_q', document.querySelector('[name="kurtha_q"]')?.value || 0);
+
+            fetch('/upload-bill-pdf/' + custId, { method: 'POST', body: payload })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    let phone = mobile.replace(/\D/g, '');
+                    if (phone.length === 10) phone = '91' + phone;
+                    window.open('https://api.whatsapp.com/send?phone=' + phone + '&text=' + encodeURIComponent(data.whatsapp_text), '_blank');
+                } else {
+                    alert('Upload error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(err => { console.error(err); alert('Could not reach backend. Make sure the Flask server is running.'); });
+        });
+    }
+
+    // ── QR / Save sequence ────────────────────────────────────────────────
+    function triggerSaveSequence(mode) {
+        globalFormMode = mode;
+        const name   = document.getElementById('screen_cust_name')?.textContent?.trim() || '';
+        const mobile = document.getElementById('screen_cust_mobile')?.textContent?.trim() || '';
+        const id     = document.getElementById('screen_cust_id')?.textContent?.replace('#','').trim() || '';
+
+        if (name && mobile && mobile !== '—') {
+            document.getElementById('qrcode_canvas').innerHTML = '';
+            const label = id + '_' + name;
+            document.getElementById('qr_contact_info').textContent = label + ' (' + mobile + ')';
+            const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${label}\nTEL;TYPE=CELL:${mobile}\nEND:VCARD`;
+            new QRCode(document.getElementById('qrcode_canvas'), {
+                text: vCard, width: 128, height: 128,
+                colorDark: '#000000', colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            document.getElementById('qrModal').classList.add('active');
+        } else {
+            executeFormSubmit();
+        }
+    }
+
+    function closeQRAndSubmit() {
+        document.getElementById('qrModal').classList.remove('active');
+        executeFormSubmit();
+    }
+
+    function executeFormSubmit() {
+        const form = document.getElementById('billingForm');
+        form.action = (globalFormMode === 'update')
+            ? "{{ url_for('update_bill') }}"
+            : "{{ url_for('save_bill') }}";
+        form.submit();
+    }
+
+    // ── Format history amounts on load ────────────────────────────────────
+    function formatHistory() {
+        document.querySelectorAll('.h-total, .h-due').forEach(cell => {
+            const v = parseFloat(cell.textContent);
+            if (!isNaN(v)) cell.textContent = fmtINR(v);
+        });
+    }
+
+    // Close QR modal on backdrop click
+    document.getElementById('qrModal')?.addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('active');
+    });
+
+
+    // ── Quick Customer Registration ───────────────────────────────────────
+    function toggleQuickReg() {
+        const panel = document.getElementById('quickRegPanel');
+        const btn   = document.getElementById('quickRegToggleBtn');
+        const isOpen = panel.classList.toggle('open');
+        btn.classList.toggle('open', isOpen);
+        btn.textContent = isOpen ? '✕ Cancel' : '+ New Customer';
+        if (isOpen) {
+            // Set today's date
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2,'0');
+            const mm = String(now.getMonth()+1).padStart(2,'0');
+            const yyyy = now.getFullYear();
+            const el = document.getElementById('qr_date');
+            if (el && !el.value) el.value = dd + '-' + mm + '-' + yyyy;
+            document.getElementById('qr_name')?.focus();
+        }
+    }
+
+    function validateQuickReg() {
+        const name   = document.getElementById('qr_name')?.value.trim();
+        const mobile = document.getElementById('qr_mobile')?.value.trim();
+        if (!name) { alert('Customer name is required.'); return false; }
+        if (!mobile) { alert('Mobile number is required.'); return false; }
+        if (!/^[0-9]{10}$/.test(mobile)) { alert('Please enter a valid 10-digit mobile number.'); return false; }
+        return true;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        formatHistory();
+        runCalculations();
+    });
+</script>
+</body>
+</html>
